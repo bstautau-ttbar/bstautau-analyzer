@@ -3,21 +3,13 @@
 ## Setup
 ### Ontime setup
 ```
-cmsrel CMSSW_13_0_10
-cd CMSSW_13_0_10/src/
-git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools 
-cd PhysicsTools/NanoAODTools
+cmsrel CMSSW_15_0_18
+cd CMSSW_15_0_18/src/
+git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 cmsenv
-scram b
-cd ../../../../ 
-git clone --recursive git@github.com:BasChiara/BsTauTau.git --branch bstautau-dev
-cd BsTauTau/corrections/
-```
-### At login
-```
-cd CMSSW_13_0_10/src/PhysicsTools/NanoAODTools
-cmsenv
-cd ../../../../BsTauTau/corrections/
+scram b -j 8
+cd $CMSSW_BASE/src
+git clone --recursive git@github.com:bstautau-ttbar/bstautau-analyzer.git --branch nanoAODv15
 ```
 
 ## Main usage: apply $\bar tt$ preselection and SF corrections
