@@ -10,7 +10,7 @@ cd PhysicsTools/NanoAODTools
 cmsenv
 scram b
 cd ../../../../ 
-git clone --recursive git@github.com:friti/BsTauTau.git --branch bstautau
+git clone --recursive git@github.com:bstautau-ttbar/bstautau-analyzer.git --branch nanoAODv9
 cd BsTauTau/plotter_project/
 ```
 
