@@ -10,7 +10,7 @@ cd PhysicsTools/NanoAODTools
 cmsenv
 scram b
 cd ../../../../ 
-git clone --recursive git@github.com:BasChiara/BsTauTau.git --branch bstautau-dev
+git clone --recursive  git@github.com:bstautau-ttbar/bstautau-analyzer.git --branch nanoAODv9
 cd BsTauTau/corrections/
 ```
 ### At login
