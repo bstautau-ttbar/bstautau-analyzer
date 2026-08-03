@@ -159,7 +159,7 @@ def compute_top_pTreweight(events, isttbar = False):
 
     new_branches = {}
     # FIXME: add GenCand_status to take the initial top
-    new_branches['top_pt_weight']  = sf_utils.eval_toppt_sf(events["GenCand_pt"], events["GenCand_id"], isttbar)
+    new_branches['top_pt_weight']  = sf_utils.eval_toppt_sf(events["GenCand_pt"], events["GenCand_pdgId"], events["GenCand_status"], isttbar)
 
     return new_branches
 
@@ -181,11 +181,11 @@ def compute_btag_sf(events, channel, year, jetbranch = "selected_jets_for_histo"
     #  retrive SF .json
     cfg_btag            = sf_inputs.object_sfs[year].get('btag', {})
     cset_btag           = correctionlib.CorrectionSet.from_file(cfg_btag.get('file', None))
-    cset_btag_mujets    = cset_btag['deepJet_mujets']
-    cset_btag_incl      = cset_btag['deepJet_incl']
+    cset_btag_mujets    = cset_btag['bc']
+    cset_btag_incl      = cset_btag['light']
 
     # split by true flavor
-    is_bcj      = (jet_flav != 0 )
+    is_bcj      = (jet_flav != 0)
     is_lightj   = (jet_flav == 0 )
     bcj_sfs, lightj_sfs = {}, {}
     

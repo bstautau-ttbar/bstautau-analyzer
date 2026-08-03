@@ -1,35 +1,42 @@
 import ROOT
+from . import selection
 from .defcpp_functions import *
 from .defak_functions import * 
 
 
 jet_attributes_global = [
-        "pt", "eta", "phi", "m", "puid", 
-        #"jetid", 
-        "deepflavB", "hadronFlavour"]
+        "pt", "eta", "phi", "m", 
+        "puid",
+        "deepflavB", "upartB", "hadronFlavour"
+]
 
-jet_attributes_part = ["ParTRawB", "ParTRawC", "ParTRawOther", "ParTRawSingletau",
-        "ParTRawTauhtaue", "ParTRawTauhtauh", "ParTRawTauhtaumu"]
+jet_attributes_part = [
+    "ParTRawB", 
+    "ParTRawC", 
+    "ParTRawOther", 
+    "ParTRawSingletau",
+    "ParTRawTauhtaue", 
+    "ParTRawTauhtauh", 
+    "ParTRawTauhtaumu"
+]
 
 # Define b-tagging thresholds
-btag_thresholds = {
-    "medium": 0.2770,
-    "loose": 0.049
-}
+btag_algo       = selection.btag_algo
+btag_thresholds = selection.btag_wpval
 
 def define_bstautau_mask(samples):
     samples = (
                     samples
-                    .Define("SignalBs", "findIndicesOfBsTauTau(GenCand_isBsTauTau)")
-                    .Define("SigJetIdx", f"matchSignalBsToJets(SignalBs, GenCand_eta, GenCand_phi, selected_jets_pt, selected_jets_eta, selected_jets_phi, selected_jets_deepflavB, {btag_thresholds['loose']})")
-                    .Define("SigJetMask", "maskFromIndices(SigJetIdx, selected_jets_pt.size())")
+                    .Define("SignalBs",   "findIndicesOfBsTauTau(GenCand_isBsTauTau)")
+                    .Define("SigJetIdx", f"matchSignalBsToJets(SignalBs, GenCand_eta, GenCand_phi, j_sel_pt, j_sel_eta, j_sel_phi, j_sel_{btag_algo}, {btag_thresholds['L']})")
+                    .Define("SigJetMask", "maskFromIndices(SigJetIdx, j_sel_pt.size())")
                 )
     return samples
 
 def match_BsToJets(data, 
                    sigflag = 'GenCand_isBsTauTau',
                    jetcollection = 'jets',
-                   btag_wp=btag_thresholds['loose'], 
+                   btag_wp=btag_thresholds['L'], 
                    max_dr=0.4, min_jet_pt=20.0, max_jet_eta=2.5, 
                    debug = False
 ):
@@ -37,7 +44,7 @@ def match_BsToJets(data,
     mask, mtch_dR    = awmatchSignalBsToJets(bs_indices, 
                                          data['GenCand_eta'], data[f'GenCand_phi'], 
                                          data[f'{jetcollection}_pt'], data[f'{jetcollection}_eta'], data[f'{jetcollection}_phi'], 
-                                         data[f'{jetcollection}_deepflavB'], btag_wp, 
+                                         data[f'{jetcollection}_{btag_algo}'], btag_wp, 
                                          max_dr, min_jet_pt, max_jet_eta
                                          )
     
@@ -52,9 +59,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtauh", "findIndicesOfBsTauTau(GenCand_isBsTauTauh)")
         .Define("SigJetIdxTauhtauh", 
                 f"matchSignalBsToJets(SignalBsTauhtauh, GenCand_eta, GenCand_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_pt, btagged_loose_jets_pt_above_20_for_histo_eta, btagged_loose_jets_pt_above_20_for_histo_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_deepflavB, {btag_thresholds['loose']})")
-        .Define("SigJetMaskTauhtauh", "maskFromIndices(SigJetIdxTauhtauh, btagged_loose_jets_pt_above_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
+                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtauh", "maskFromIndices(SigJetIdxTauhtauh, j_sel_btagL_pt_20_for_histo_pt.size())")
     )
 
     # For Tauhtaue
@@ -63,9 +70,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtaue", "findIndicesOfBsTauTau(GenCand_isBsTauTaue)")
         .Define("SigJetIdxTauhtaue", 
                 f"matchSignalBsToJets(SignalBsTauhtaue, GenCand_eta, GenCand_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_pt, btagged_loose_jets_pt_above_20_for_histo_eta, btagged_loose_jets_pt_above_20_for_histo_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_deepflavB, {btag_thresholds['loose']})")
-        .Define("SigJetMaskTauhtaue", "maskFromIndices(SigJetIdxTauhtaue, btagged_loose_jets_pt_above_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
+                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtaue", "maskFromIndices(SigJetIdxTauhtaue, j_sel_btagL_pt_20_for_histo_pt.size())")
     )
     
     # For Tauhtaumu
@@ -74,9 +81,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtaumu", "findIndicesOfBsTauTau(GenCand_isBsTauTaumu)")
         .Define("SigJetIdxTauhtaumu",
                 f"matchSignalBsToJets(SignalBsTauhtaumu, GenCand_eta, GenCand_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_pt, btagged_loose_jets_pt_above_20_for_histo_eta, btagged_loose_jets_pt_above_20_for_histo_phi, "
-                f"btagged_loose_jets_pt_above_20_for_histo_deepflavB, {btag_thresholds['loose']})")
-        .Define("SigJetMaskTauhtaumu", "maskFromIndices(SigJetIdxTauhtaumu, btagged_loose_jets_pt_above_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
+                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtaumu", "maskFromIndices(SigJetIdxTauhtaumu, j_sel_btagL_pt_20_for_histo_pt.size())")
     )
 
     return samples
@@ -92,9 +99,9 @@ def define_jets_with_minimum_selection(samples, minimum_jet_conditions, part_sam
         jet_attributes = jet_attributes_global
 
     for attr in jet_attributes:
-        samples = samples.Define(f"selected_jets_{attr}", f"j_{attr}[{minimum_jet_conditions}]")
+        samples = samples.Define(f"j_sel_{attr}", f"j_{attr}[{minimum_jet_conditions}]")
 
-    samples = samples.Define("selected_njets", "selected_jets_pt.size()")
+    samples = samples.Define("nj_sel", "j_sel_pt.size()")
 
 
     return samples
@@ -109,14 +116,14 @@ def define_jets_with_minimum_selection_for_histos(samples, is_bstautau, bstautau
 
     if is_bstautau:
         for attr in jet_attributes:
-            samples = samples.Define(f"selected_jets_for_histo_{attr}", f"selected_jets_{attr}[{bstautau_conditions['general']}]")
+            samples = samples.Define(f"j_sel_for_histo_{attr}", f"j_sel_{attr}[{bstautau_conditions['general']}]")
 
     else:
         for attr in jet_attributes:
-            samples = samples.Define(f"selected_jets_for_histo_{attr}", f"selected_jets_{attr}")    
+            samples = samples.Define(f"j_sel_for_histo_{attr}", f"j_sel_{attr}")    
 
 
-    samples = samples.Define("selected_jets_for_histo_njets", "selected_jets_for_histo_pt.size()")
+    samples = samples.Define("nj_sel_for_histo", "j_sel_for_histo_pt.size()")
 
     return samples
 
@@ -135,13 +142,13 @@ def define_jets_with_btagging_selection_for_filters(samples, part_samples=True):
     # Define b-tagging conditions for medium and loose thresholds
     for btag_level, btag_value in btag_thresholds.items():
         # Base b-tagging condition
-        samples = samples.Define(f"btagged_{btag_level}_jets", f"selected_jets_pt[selected_jets_deepflavB > {btag_value}]")
+        samples = samples.Define(f"j_sel_btag{btag_level}_pt", f"j_sel_pt[j_sel_deepflavB > {btag_value}]")
         
         # Add pt thresholds - these are needed for selection filters
         for pt in pt_thresholds:
             samples = samples.Define(
-                f"btagged_{btag_level}_jets_pt_above_{pt}",
-                f"selected_jets_pt[selected_jets_deepflavB > {btag_value} & selected_jets_pt > {pt}]"
+                f"j_sel_btag{btag_level}_pt{pt}",
+                f"j_sel_pt[j_sel_deepflavB > {btag_value} & j_sel_pt > {pt}]"
             )
 
     '''Define the btagged jets but with the bstautau mask - base collections only'''
@@ -149,7 +156,7 @@ def define_jets_with_btagging_selection_for_filters(samples, part_samples=True):
     for btag_level, btag_value in btag_thresholds.items():
         # Base b-tagging condition for histograms
         for attr in jet_attributes:
-            samples = samples.Define(f"btagged_{btag_level}_jets_for_histo_{attr}", f"selected_jets_for_histo_{attr}[selected_jets_for_histo_deepflavB > {btag_value}]")
+            samples = samples.Define(f"j_sel_btag{btag_level}_for_histo_{attr}", f"j_sel_for_histo_{attr}[j_sel_for_histo_{btag_algo} > {btag_value}]")
 
     return samples
 
@@ -170,29 +177,29 @@ def define_jets_with_btagging_selection_for_histos(samples, part_samples, plot_a
         for pt in pt_thresholds:
             for attr in jet_attributes:
                 # First create the filtered collection
-                filtered_attr = f"btagged_{btag_level}_jets_pt_above_{pt}_filtered_{attr}"
+                filtered_attr = f"j_sel_btag{btag_level}_pt{pt}_filtered_{attr}"
                 samples = samples.Define(
                     filtered_attr,
-                    f"selected_jets_for_histo_{attr}[selected_jets_for_histo_deepflavB > {btag_value} & selected_jets_for_histo_pt > {pt}]"
+                    f"j_sel_for_histo_{attr}[j_sel_for_histo_{btag_algo} > {btag_value} & j_sel_for_histo_pt > {pt}]"
                 )
                 # Choose between top 2 jets or all jets based on flag
                 if plot_all_jets:
                     # Use all jets - just alias the filtered collection
                     samples = samples.Define(
-                        f"btagged_{btag_level}_jets_pt_above_{pt}_for_histo_{attr}",
+                        f"j_sel_btag{btag_level}_pt{pt}_for_histo_{attr}",
                         filtered_attr
                     )
                 else:
                     # Take top 2 jets (current behavior)
                     if attr == 'pt':
                         samples = samples.Define(
-                            f"btagged_{btag_level}_jets_pt_above_{pt}_for_histo_{attr}",
+                            f"j_sel_btag{btag_level}_pt{pt}_for_histo_{attr}",
                             f"takeTopNByPt({filtered_attr}, {filtered_attr}, 2)"
                         )
                     else:
-                        filtered_pt = f"btagged_{btag_level}_jets_pt_above_{pt}_filtered_pt"
+                        filtered_pt = f"j_sel_btag{btag_level}_pt{pt}_filtered_pt"
                         samples = samples.Define(
-                            f"btagged_{btag_level}_jets_pt_above_{pt}_for_histo_{attr}",
+                            f"j_sel_btag{btag_level}_pt{pt}_for_histo_{attr}",
                             f"takeTopNByPt({filtered_attr}, {filtered_pt}, 2)"
                         )
 
@@ -200,8 +207,8 @@ def define_jets_with_btagging_selection_for_histos(samples, part_samples, plot_a
         # Define the number of b-tagged jets for each threshold
         for pt in pt_thresholds:
             samples = samples.Define(
-                f"btagged_{btag_level}_jets_pt_above_{pt}_for_histo_njets",
-                f"btagged_{btag_level}_jets_pt_above_{pt}_for_histo_pt.size()"
+                f"j_sel_btag{btag_level}_pt{pt}_for_histo_njets",
+                f"j_sel_btag{btag_level}_pt{pt}_for_histo_pt.size()"
             )
 
     return samples
@@ -216,11 +223,11 @@ def define_jets_with_btagging_selection(samples, part_samples, plot_all_jets=Fal
 def define_btagging_conditions(samples, ch):
     """Define b-tagging conditions for different channels."""
     btagging_conditions = {
-        "emu"   : "btagged_loose_jets_pt_above_20.size()>=2",
-        "mumu"  : "btagged_loose_jets_pt_above_20.size()>=2",
-        "ee"    : "btagged_loose_jets_pt_above_20.size()>=2",
-        "mu"    : "btagged_medium_jets_pt_above_20.size()>=2",
-        "e"     : "btagged_loose_jets_pt_above_30.size()>=2"
+        "emu"   : "j_sel_btagL_pt20.size()>=2",
+        "mumu"  : "j_sel_btagL_pt20.size()>=2",
+        "ee"    : "j_sel_btagL_pt20.size()>=2",
+        "mu"    : "j_sel_btagM_pt20.size()>=2",
+        "e"     : "j_sel_btagL_pt30.size()>=2"
     }
     
     for channel, condition in btagging_conditions.items():
@@ -232,11 +239,11 @@ def define_btagging_conditions(samples, ch):
 def define_jet_conditions(samples, ch, minimum_jet_conditions):
     """Define jet selection conditions for different channels."""
     jet_conditions = {
-        "emu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (selected_jets_pt.size()>=2)",
-        "mumu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (selected_jets_pt.size()>=2)",
-        "ee": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (selected_jets_pt.size()>=2)",
-        "mu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (selected_jets_pt.size()>=4)",
-        "e": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (selected_jets_pt.size()>=4)"
+        "emu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (j_sel_pt.size()>=2)",
+        "mumu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (j_sel_pt.size()>=2)",
+        "ee": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (j_sel_pt.size()>=2)",
+        "mu": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (j_sel_pt.size()>=4)",
+        "e": f"ROOT::VecOps::Any({minimum_jet_conditions}) & (j_sel_pt.size()>=4)"
     }
     for channel, condition in jet_conditions.items():
         samples = samples.Define(f"jet_conditions_{channel}", condition)
@@ -295,7 +302,7 @@ def define_invariant_mass_and_mt(samples,ch):
     """
 
     # Define the HT (sum of selected jets pt)
-    #samples = samples.Define("selected_jets_ht", "Sum(selected_jets_pt)")
+    #samples = samples.Define("j_sel_ht", "Sum(j_sel_pt)")
 
     # Invariant mass and MT definitions based on channel
     if ch == 'mumu':

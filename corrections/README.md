@@ -1,17 +1,5 @@
 # Preselection and MC correction for $Bs\to\tau\tau$
 
-## Setup
-### Ontime setup
-```
-cmsrel CMSSW_15_0_18
-cd CMSSW_15_0_18/src/
-git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
-cmsenv
-scram b -j 8
-cd $CMSSW_BASE/src
-git clone --recursive git@github.com:bstautau-ttbar/bstautau-analyzer.git --branch nanoAODv15
-```
-
 ## Main usage: apply $\bar tt$ preselection and SF corrections
 
 ```bash

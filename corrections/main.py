@@ -6,6 +6,8 @@ import os, sys
 import multiprocessing
 import numpy as np
 import argparse
+import time
+
 import ROOT
 ROOT.gROOT.SetBatch()   
 ROOT.gStyle.SetOptStat(0)
@@ -69,6 +71,8 @@ def parse_arguments():
 
 if __name__ == "__main__":
 
+    start_time = time.time()
+
     # process arguments
     args = parse_arguments()
     
@@ -91,7 +95,7 @@ if __name__ == "__main__":
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info(" TEST MODE ENABLED")
-        used_mc_samples_names = used_mc_samples_names[:1] # test only one MC sample
+        used_mc_samples_names = used_mc_samples_names[-1:] # test only one MC sample
     
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 
@@ -109,7 +113,6 @@ if __name__ == "__main__":
         data.ioutils.checkpath(tree_dir, isdir=True, mustexist=True)
         out_dir  = out_dir_base.format(channel=ch)
         data.ioutils.checkpath(out_dir, isdir=True, mustexist=False)
-        print(f" + {tree_dir}")
 
         mc_samples = data.ioutils.load_mc_samples(
             tree_dir,
@@ -124,15 +127,16 @@ if __name__ == "__main__":
         utils.logger.print_bold(f"\n>>> PROCESSING SAMPLES")
         # --> LOOP ON SAMPLES
         for name, rdf in samples[ch].items():
-            print(f"\n>[{name}]")
+            print(f"\n------ {name} ------")
             samples[ch][name] = samples[ch][name].Define("entry_idx", "rdfentry_")
+            _is_signal = 'bstautau' in name
         
             # trigger selections (OR of the requirements in data)
             hlt_conditions = data.selection.trigger_selections.get(ch, {})
-            hlt_paths      = [hlt_conditions.get(dset, "(1)") for dset in hlt_conditions]
+            hlt_paths      = [hlt_conditions.get(dset, "(1)") for dset in hlt_conditions] # FIXME: valid for MC only
             hlt_sel        = ' | '.join(hlt_paths)
+            
             print(f" [SKIM] trigger selection: {hlt_sel}")
-
             samples[ch][name] = samples[ch][name].Filter(hlt_sel)
 
             # define invariant mass and transverse mass
@@ -146,11 +150,12 @@ if __name__ == "__main__":
             )
             
             #FIXME : check if anything missing for Bs signal
-            if 'bstautau' in name: samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name])
+            if _is_signal: 
+                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name])
 
             samples[ch][name] = data.defutils.define_jets_with_minimum_selection_for_histos(
                 samples[ch][name], 
-                is_bstautau='bstautau' in name, 
+                is_bstautau=_is_signal, 
                 bstautau_conditions=data.selection.bstautau_conditions
             )
             samples[ch][name] = data.defutils.define_jets_with_btagging_selection_for_filters(samples[ch][name])
@@ -212,20 +217,20 @@ if __name__ == "__main__":
                     trgsf_branches = sf.sf_computation.compute_trigger_sf(chunk, ch, year)
 
                     # top pT re-weight in ttbar
-                    topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or 'bstautau' in name)
+                    topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or _is_signal)
 
-                    # b-tag scale factors
-                    btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year, 
-                                                                        jetbranch   = "selected_jets_for_histo", 
-                                                                        wp          = data.selection.btag_chwp[ch][0],
-                                                                        wp_val      = data.selection.btag_chwp[ch][1]
-                                                                        )
+                    ## b-tag scale factors #FIXME: move to UParT b-tagging
+                    #btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year, 
+                    #                                                    jetbranch   = "selected_jets_for_histo", 
+                    #                                                    wp          = data.selection.btag_chwp[ch][0],
+                    #                                                    wp_val      = data.selection.btag_chwp[ch][1]
+                    #                                                    )
                     out_chunk = {
                         "entry_idx": chunk["entry_idx"], # keep entry-by-entry alignement
                         **objsf_branches, 
                         **trgsf_branches, 
                         **topsf_branches, 
-                        **btagsf_branches,
+                        #**btagsf_branches,
                     }
 
                     n_events_out += len(chunk)
@@ -235,7 +240,7 @@ if __name__ == "__main__":
                         writer = outf[_tree_name]
                     else:
                         writer.extend(out_chunk)
-                print(out_chunk.keys())
+                
             utils.logger.print_info(f"[TMP] saved sample with SFs to {sfs_outpath}")
             
             # --- post-loop consistency check: no loss, no duplication, same events ---
@@ -283,3 +288,7 @@ if __name__ == "__main__":
             
             if not _testmode_:
                 ROOT.EnableImplicitMT(NTHREADS)  # restore for next sample
+    
+
+    elapsed_time = time.time() - start_time
+    utils.logger.print_bold(f"\n>>> DONE AFTER {elapsed_time//60:.0f}m {elapsed_time%60:.0f}s <<<")

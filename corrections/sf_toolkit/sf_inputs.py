@@ -12,7 +12,7 @@ object_sfs ={
             'trg'  : 'NUM_IsoMu24_DEN_CutBasedIdTight_and_PFIsoTight',
         },
         'electron' : {
-            'file' : '/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2018-UL-NanoAODv9/latest/electron.json.gz',
+            'file' : '/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2018-UL-NanoAODv15/latest/electron.json.gz',
             'all'  : 'UL-Electron-ID-SF',
         },
         'dileptrg' : {
@@ -24,11 +24,11 @@ object_sfs ={
             'hname' : 'EGamma_SF2D'
         },
         'btag' : {
-            'file'   : '/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv9/latest/btagging.json.gz',
-            'mujets' : 'deepJet_mujets',
-            'incl'   : 'deepJet_incl',
-            'eff'    : './sf_toolkit/sf_maps/0520A050-AF68-EF43-AA5B-5AA77C74ED73_out.root',
-            'effname': 'h2_{workingpoint}Eff_{jetflavor}'
+            'file'    : '/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/latest/btagging.json.gz',
+            'bc'      : 'UParTAK4_**',
+            'light'   : 'UParTAK4_light',
+            'eff'     : './sf_toolkit/sf_maps/0520A050-AF68-EF43-AA5B-5AA77C74ED73_out.root',
+            'effname' : 'h2_{workingpoint}Eff_{jetflavor}'
         },
     }
 }

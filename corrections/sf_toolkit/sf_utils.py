@@ -136,20 +136,20 @@ def eval_sf2Dhisto(X, Y, channel, year, cfg, wname = "trg_sf_weight"):
 def top_pt_weight(pt):
     return np.exp(0.0615 - 0.0005 * pt)
 
-def eval_toppt_sf(genpt, genid, isttbar):
+def eval_toppt_sf(genpt, genid, genstatus, isttbar):
     #https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting
+    #  pT value derived from the 'isLastCopy', i.e. after radiation and before decay
+    #   bit 13 of GenCand_status = 8192
    
     if not isttbar : return np.ones(len(genpt), dtype=np.float64)
     
     MAX_tpT = 500.
-    is_top  = (genid ==  6)
-    is_atop = (genid == -6)
-    # FIXME: for some reason there are 2 top and 2 anti-top
-    #           pick the second one for conformity but should have status flag
-    # Use ak.firsts on reversed subarrays to safely get the last element;
-    # fill_none handles events where no top/antitop is found.
-    top_pt  = np.minimum(ak.to_numpy(ak.fill_none(ak.firsts(genpt[is_top][:,  ::-1], axis=1), MAX_tpT)), MAX_tpT)
-    atop_pt = np.minimum(ak.to_numpy(ak.fill_none(ak.firsts(genpt[is_atop][:, ::-1], axis=1), MAX_tpT)), MAX_tpT)
+    is_top  = (genid ==  6) & ((genstatus & (1 << 13)) != 0)
+    is_atop = (genid == -6) & ((genstatus & (1 << 13)) != 0)
+    atop_status = genstatus[is_atop]
+    
+    top_pt  = np.minimum(ak.to_numpy(ak.fill_none(ak.firsts(genpt[is_top], axis=1), MAX_tpT)), MAX_tpT)
+    atop_pt = np.minimum(ak.to_numpy(ak.fill_none(ak.firsts(genpt[is_atop], axis=1), MAX_tpT)), MAX_tpT)
 
     return top_pt_weight(top_pt) * top_pt_weight(atop_pt)
 

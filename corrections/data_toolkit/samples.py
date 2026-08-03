@@ -80,6 +80,7 @@ mc_samples_names = [
     'wext',
     'dy',
     'bstautau',
+    'bstautauext',
     #'dyext' 
 ]
 
@@ -104,7 +105,7 @@ files_names['st_antit']     = 'ST_t_antitop'
 files_names['st_tw']        = 'ST_tW'
 files_names['st_antitw']    = 'ST_tW_antitop'
 files_names['bstautau']     = 'ttbarToBsToTauTau'
-
+files_names['bstautauext']  = 'ttbarToBsToTauTau-ext'
 
 
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/XsdbTutorialSep#TTbar
@@ -138,6 +139,7 @@ _xsec_samples  = { #(pb)
     "st_tw": 35.85,             # # CHECKKK
     "st_antitw": 35.85,         # # CHECKKK
     "bstautau": _xsec_ttbar['central'] * 0.16 * 6.8 * 0.001 *10,        ## xsec(ttbar) * filter-efficiency * Br(Bs->tautau) (10 times LHCb)
+    "bstautauext": _xsec_ttbar['central'] * 0.16 * 6.8 * 0.001 *10,        ## xsec(ttbar) * filter-efficiency * Br(Bs->tautau) (10 times LHCb)
 }
 _xsec_samples_relunc = { # for naive uncertainty propagation
     "tt_semilep"    : _xsec_ttbar['uncertainty']['total'][0]/_xsec_ttbar['central'],
@@ -156,6 +158,7 @@ _xsec_samples_relunc = { # for naive uncertainty propagation
     "st_tw"         : 0.0,        
     "st_antitw"     : 0.0,    
     "bstautau"      : 0.0,
+    "bstautauext"   : 0.0,
 } 
 
 ## titles
@@ -175,7 +178,8 @@ titles['st_t'] = 'ST_t_top'
 titles['st_antit'] = 'ST_t_antitop'
 titles['st_tw'] = 'ST_tW_top'
 titles['st_antitw'] = 'ST_tW_antitop'
-titles['bstautau'] = 'B_{s}#rightarrow #tau #tau'
+titles['bstautau'] = 'B_{s}#rightarrow#tau#tau'
+titles['bstautauext'] = 'B_{s}#rightarrow#tau#tau (ext)'
 
 
 
@@ -200,3 +204,4 @@ colours['wext'] = ROOT.TColor.GetColor("#92dadd")
 colours['dy'] = ROOT.TColor.GetColor("#e76300")
 colours['dyext'] = ROOT.TColor.GetColor("#e76300")
 colours['bstautau'] = ROOT.TColor.GetColor("#ffa90e")
+colours['bstautauext'] = ROOT.TColor.GetColor("#ffa90e")   
