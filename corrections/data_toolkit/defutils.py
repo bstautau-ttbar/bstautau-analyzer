@@ -59,9 +59,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtauh", "findIndicesOfBsTauTau(GenCand_isBsTauTauh)")
         .Define("SigJetIdxTauhtauh", 
                 f"matchSignalBsToJets(SignalBsTauhtauh, GenCand_eta, GenCand_phi, "
-                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
-                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
-        .Define("SigJetMaskTauhtauh", "maskFromIndices(SigJetIdxTauhtauh, j_sel_btagL_pt_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt20_for_histo_pt, j_sel_btagL_pt20_for_histo_eta, j_sel_btagL_pt20_for_histo_phi, "
+                f"j_sel_btagL_pt20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtauh", "maskFromIndices(SigJetIdxTauhtauh, j_sel_btagL_pt20_for_histo_pt.size())")
     )
 
     # For Tauhtaue
@@ -70,9 +70,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtaue", "findIndicesOfBsTauTau(GenCand_isBsTauTaue)")
         .Define("SigJetIdxTauhtaue", 
                 f"matchSignalBsToJets(SignalBsTauhtaue, GenCand_eta, GenCand_phi, "
-                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
-                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
-        .Define("SigJetMaskTauhtaue", "maskFromIndices(SigJetIdxTauhtaue, j_sel_btagL_pt_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt20_for_histo_pt, j_sel_btagL_pt20_for_histo_eta, j_sel_btagL_pt20_for_histo_phi, "
+                f"j_sel_btagL_pt20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtaue", "maskFromIndices(SigJetIdxTauhtaue, j_sel_btagL_pt20_for_histo_pt.size())")
     )
     
     # For Tauhtaumu
@@ -81,9 +81,9 @@ def define_bstautau_taudecaymodes_mask(samples):
         .Define("SignalBsTauhtaumu", "findIndicesOfBsTauTau(GenCand_isBsTauTaumu)")
         .Define("SigJetIdxTauhtaumu",
                 f"matchSignalBsToJets(SignalBsTauhtaumu, GenCand_eta, GenCand_phi, "
-                f"j_sel_btagL_pt_20_for_histo_pt, j_sel_btagL_pt_20_for_histo_eta, j_sel_btagL_pt_20_for_histo_phi, "
-                f"j_sel_btagL_pt_20_for_histo_{btag_algo}, {btag_thresholds['L']})")
-        .Define("SigJetMaskTauhtaumu", "maskFromIndices(SigJetIdxTauhtaumu, j_sel_btagL_pt_20_for_histo_pt.size())")
+                f"j_sel_btagL_pt20_for_histo_pt, j_sel_btagL_pt20_for_histo_eta, j_sel_btagL_pt20_for_histo_phi, "
+                f"j_sel_btagL_pt20_for_histo_{btag_algo}, {btag_thresholds['L']})")
+        .Define("SigJetMaskTauhtaumu", "maskFromIndices(SigJetIdxTauhtaumu, j_sel_btagL_pt20_for_histo_pt.size())")
     )
 
     return samples
@@ -93,10 +93,9 @@ def define_jets_with_minimum_selection(samples, minimum_jet_conditions, part_sam
     """Function to define jet-related branches."""
 
     # Define branches for each jet attribute
+    jet_attributes = jet_attributes_global
     if part_samples:
-        jet_attributes = jet_attributes_global + jet_attributes_part
-    else:
-        jet_attributes = jet_attributes_global
+        jet_attributes = jet_attributes + jet_attributes_part
 
     for attr in jet_attributes:
         samples = samples.Define(f"j_sel_{attr}", f"j_{attr}[{minimum_jet_conditions}]")
@@ -178,6 +177,8 @@ def define_jets_with_btagging_selection_for_histos(samples, part_samples, plot_a
             for attr in jet_attributes:
                 # First create the filtered collection
                 filtered_attr = f"j_sel_btag{btag_level}_pt{pt}_filtered_{attr}"
+
+                #print(f" [define_jets_with_btagging_selection_for_histos()] btag WP {btag_level}| pT > {pt}| var {attr} -> filtered collection: {filtered_attr}")
                 samples = samples.Define(
                     filtered_attr,
                     f"j_sel_for_histo_{attr}[j_sel_for_histo_{btag_algo} > {btag_value} & j_sel_for_histo_pt > {pt}]"
@@ -329,7 +330,7 @@ def define_invariant_mass_and_mt(samples,ch):
     return samples
 
 
-def build_weight_string(k, files_names, options):
+def build_weight_string(k, files_names, sf=True, btag_sfs=False):
     """
     Constructs a weight expression string based on sample name and options.
 
@@ -346,14 +347,12 @@ def build_weight_string(k, files_names, options):
     print(f"[{k}] Applying top pT reweighting")
     weight_terms.append('top_pt_weight')
 
-    if options.compute_sfs or options.use_ntuples_with_sfs:
+    if sf:
         print(f"[{k}] Applying scale factors")
-        weight_terms.append('tot_sf_weight')
+        weight_terms.extend(['mu_sf_weight', 'e_sf_weight', 'trg_sf_weight']) #only SFs are applied
 
-        #if 'TTT' in files_names.get(k, '') or 'BsToTauTau' in files_names.get(k, ''):
-
-    elif options.compute_btag_sfs or options.use_ntuples_with_btag_sfs:
-        print(f"[{k}] Applying SFs and btag scale factors")
-        weight_terms.extend(['tot_sf_weight', 'btag_event_weight']) #both SF and btagging SFs are applied
+    if btag_sfs:
+        print(f"[{k}] Applying btag scale factors")
+        weight_terms.append('btag_event_weight') #only btagging SFs are applied
 
     return '*'.join(weight_terms)

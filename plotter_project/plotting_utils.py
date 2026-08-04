@@ -142,8 +142,8 @@ def create_histogram_stacks(temp_hists, k, blinding):
         if f'{k}_data' in key:
             continue
         ihist.Draw('hist same')
-        if "bstautau" not in key:
-            ths1.Add(ihist.GetValue())
+        #if "bstautau" not in key:
+        ths1.Add(ihist.GetValue())
 
     ths1.SetMinimum(0.0001)
 
@@ -199,17 +199,17 @@ def style_and_draw_bstautau(temp_hists, k, ths1, colours, scale_to_mc=True):
     hist.Draw("EP same")
 
 
-def save_plot_versions(c1, label, ch, k, main_pad, scale_suffix=""):
+def save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix=""):
     """
     Save plots in multiple formats and versions with new directory structure.
     """
     if scale_suffix == "_scaled":
-        base_path = f'plots/{label}/{ch}/samples_based/bstautau_scaled'
+        base_path = f'{basedir}/{ch}/samples_based/bstautau_scaled'
     elif scale_suffix == "_unscaled":
-        base_path = f'plots/{label}/{ch}/samples_based/bstautau_not_scaled'
+        base_path = f'{basedir}/{ch}/samples_based/bstautau_not_scaled'
     else:
         # For plots without BsTauTau, use scaled path as default
-        base_path = f'plots/{label}/{ch}/samples_based/bstautau_scaled'
+        base_path = f'{basedir}/{ch}/samples_based/bstautau_scaled'
     
     # Linear version
     main_pad.SetLogy(False)
@@ -262,21 +262,22 @@ def save_plot_versions(c1, label, ch, k, main_pad, scale_suffix=""):
     c1.Update()
 
 
-def process_histograms(histos, temp_hists, samples, ch, colours, label, titles, main_pad, ratio_pad, c1, blinding, mconly=False):
+def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles, main_pad, ratio_pad, c1, blinding, mconly=False):
     # Create ROOT file for saving histograms with compression
-    root_file_path = f'plots/{label}/histograms.root'
+    root_file_path = f'{basedir}/histograms.root'
     root_file = ROOT.TFile(root_file_path, 'UPDATE', "", ROOT.kLZMA)  # Use LZMA compression
     root_file.SetCompressionLevel(1)  # Fast compression
-    print(f"Created ROOT file: {root_file_path}")
+    print(f" + created ROOT file: {root_file_path}")
     
     # Create channel folder in ROOT file
     channel_folder = root_file.mkdir(ch)
     
     for i, (k, v) in enumerate(histos[ch].items()):
+        print(f" ({i+1}/{len(histos[ch])}) - {k}")
         c1.cd()
-        data_smpl = get_data_sample_name(ch) if not mconly else None
-        samples_for_legend = get_samples_for_legend(samples, ch, data_smpl)
-        leg = create_legend(temp_hists, samples_for_legend, titles)
+        data_smpl           = get_data_sample_name(ch) if not mconly else None
+        samples_for_legend  = get_samples_for_legend(samples, ch, data_smpl)
+        leg                 = create_legend(temp_hists, samples_for_legend, titles)
 
         ## plotting main pad
         main_pad.cd()
@@ -286,8 +287,6 @@ def process_histograms(histos, temp_hists, samples, ch, colours, label, titles, 
         
         # Create histogram stacks
         ths1, data_ths = create_histogram_stacks(temp_hists, k, blinding)
-
-        # Draw histogram first to get proper axis ranges
         ths1.Draw('hist')
         
         # Calculate desired maximum for Y-axis range (considering all scenarios)
@@ -300,6 +299,8 @@ def process_histograms(histos, temp_hists, samples, ch, colours, label, titles, 
             data_max = data_ths.GetStack().Last().GetMaximum()
         else:
             data_max = 1
+
+        print(f"MC max: {mc_max}, Data max: {data_max}")
         
         # For BsTauTau plots, calculate max considering both scaled and unscaled versions
         if f'{k}_bstautau' in temp_hists[k]:
@@ -374,7 +375,7 @@ def process_histograms(histos, temp_hists, samples, ch, colours, label, titles, 
         ratio.Draw('EP same')
 
         # Save unscaled version in all formats (linear and log)
-        save_plot_versions(c1, label, ch, k, main_pad, scale_suffix="_unscaled")
+        save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="_unscaled")
 
         # Version 2: BsTauTau scaled to data (current behavior) - PLOT SECOND
         if f'{k}_bstautau' in temp_hists[k].keys():
@@ -412,11 +413,11 @@ def process_histograms(histos, temp_hists, samples, ch, colours, label, titles, 
                 ratio.Draw('EP same')
             
             # Save scaled version in all formats (linear and log)
-            save_plot_versions(c1, label, ch, k, main_pad, scale_suffix="_scaled")
+            save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="_scaled")
 
         else:
             # For plots without BsTauTau, just save the regular version
-            save_plot_versions(c1, label, ch, k, main_pad, scale_suffix="")
+            save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="")
 
         # ROOT file already saved above before any scaling
 

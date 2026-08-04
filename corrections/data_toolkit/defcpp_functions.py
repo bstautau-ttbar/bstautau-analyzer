@@ -17,6 +17,22 @@ double compute_mt(double pt, double phi, double met, double met_phi) {
 }
 """)
 
+# Add helper function to sort and take top N jets by pT
+ROOT.gInterpreter.Declare("""
+template<typename T>
+ROOT::VecOps::RVec<T> takeTopNByPt(const ROOT::VecOps::RVec<T>& values, 
+                                    const ROOT::VecOps::RVec<float>& pts, 
+                                    int n = 2) {
+    auto indices = ROOT::VecOps::Argsort(pts, [](float a, float b) { return a > b; });
+    ROOT::VecOps::RVec<T> result;
+    for (int i = 0; i < std::min(n, (int)indices.size()); i++) {
+        //std::cout<< "Taking jet with pt: " << pts[indices[i]] << std::endl;                  
+        result.push_back(values[indices[i]]);
+    }
+    return result;
+}
+""")
+
 
 ROOT.gInterpreter.Declare("""
 ROOT::RVec<int> findIndicesOfBsTauTau(const ROOT::RVec<int>& isBsTauTau) {

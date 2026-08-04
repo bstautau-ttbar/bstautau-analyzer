@@ -46,25 +46,33 @@ def parse_arguments():
         "input": None,
         "outdirectory": None,
         "channels": ['emu'],
-        "test": False
+        "test": False,
+        "mc_only": False
     }
 
-    parser = argparse.ArgumentParser(description="Apply corrections to ntuples")
+    parser = argparse.ArgumentParser(
+        description="Apply corrections to ntuples",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument("--input", "-i", 
                         required=True, 
                         help=".yml file containing the input ntuples locations and metadata"
                         )
     parser.add_argument("--outdirectory", "-o",
                         default=defaults_["outdirectory"],
-                        help=f"directory for output-ntuples (created if does not exist). N.B. overwrites the location in the input .yml file if provided. | DEFAULT = {defaults_['outdirectory']}",
+                        help=f"directory for output-ntuples (created if does not exist). N.B. overwrites the location in the input .yml file if provided.",
                         )
     parser.add_argument('--channels', 
                         nargs='+', 
                         default=defaults_["channels"],
-                        help=f'select channels to process. | DEFAULT = {defaults_["channels"]}')
+                        help=f'select channels to process.')
+    parser.add_argument('--mc_only',
+                        action='store_true',
+                        help=f'process only MC samples (no data).'
+                        )
     parser.add_argument("--test", "-t",
                         action="store_true",
-                        help=f"run in test mode (process only a small subset of events). | DEFAULT = {defaults_['test']}",
+                        help=f"run in test mode (process only a small subset of events).",
                         )
     return parser.parse_args()
 
@@ -82,6 +90,7 @@ if __name__ == "__main__":
     channels   = args.channels
     year       = str(in_info.get('common', {}).get('year', 2018))
     _testmode_ = args.test
+    _mc_only_  = args.mc_only
     nevents    = 1000 if _testmode_ else None
     setup_multithreading(nevents)
 
@@ -91,23 +100,21 @@ if __name__ == "__main__":
     out_dir_base  = args.outdirectory if args.outdirectory else in_info.get('MC', {}).get('outpath_template', None)
     tmp_outdir    = "/tmp" if not _testmode_ else "tmp_output" # temporary path for RDataFrame -> uproot
 
-
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info(" TEST MODE ENABLED")
-        used_mc_samples_names = used_mc_samples_names[-1:] # test only one MC sample
-    
+    used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau'] # FIXME : temporary for testing
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
-
+    
     samples = dict()
     _tree_name = in_info.get('common', {}).get('treename', 'Events')
 
     # --> LOOP ON CHANNELS
     for ch in channels:
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
-        
         samples[ch] = dict()
         
+        # MC
         print(" ... loading MC samples")
         tree_dir = tree_dir_base.format(channel=ch)
         data.ioutils.checkpath(tree_dir, isdir=True, mustexist=True)
@@ -123,10 +130,16 @@ if __name__ == "__main__":
             nevents = nevents
         )
         samples[ch].update(mc_samples)
+
+        # DATA
+        if not (_mc_only_ or _testmode_):
+            print(" ... loading DATA samples")
+            print("NOT IMPLEMENTED YET")
         
         utils.logger.print_bold(f"\n>>> PROCESSING SAMPLES")
         # --> LOOP ON SAMPLES
         for name, rdf in samples[ch].items():
+            
             print(f"\n------ {name} ------")
             samples[ch][name] = samples[ch][name].Define("entry_idx", "rdfentry_")
             _is_signal = 'bstautau' in name

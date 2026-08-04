@@ -6,54 +6,55 @@ import samples as smpl
 
 
 
-def make_directories_for_plots(label, channels):
+def make_directories_for_plots(basedir, channels):
     """Create directories for storing plots in multiple formats and versions."""
+    print(f"[OUTPUT] Creating directories for plots in {basedir} for channels: {channels}")
     for ch in channels:
         # Sample-based plots
         ## BsTauTau scaled
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/log/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/log/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/log/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/log/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/log/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/log/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/log/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/log/root/' %(basedir,ch))
         
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/lin/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/lin/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/lin/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_scaled/lin/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/lin/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/lin/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/lin/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_scaled/lin/root/' %(basedir,ch))
         
         ## BsTauTau not scaled
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/log/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/log/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/log/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/log/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/log/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/log/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/log/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/log/root/' %(basedir,ch))
         
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/lin/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/lin/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/lin/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/samples_based/bstautau_not_scaled/lin/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/lin/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/lin/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/lin/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/samples_based/bstautau_not_scaled/lin/root/' %(basedir,ch))
         
         # Flavor-based plots
         ## BsTauTau scaled
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/log/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/log/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/log/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/log/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/log/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/log/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/log/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/log/root/' %(basedir,ch))
         
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/lin/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/lin/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/lin/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_scaled/lin/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/lin/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/lin/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/lin/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_scaled/lin/root/' %(basedir,ch))
         
         ## BsTauTau not scaled
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/log/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/log/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/log/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/log/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/log/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/log/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/log/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/log/root/' %(basedir,ch))
         
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/lin/png/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/lin/pdf/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/lin/C/' %(label,ch))
-        os.system('mkdir -p plots/%s/%s/flavor_based/bstautau_not_scaled/lin/root/' %(label,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/lin/png/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/lin/pdf/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/lin/C/' %(basedir,ch))
+        os.system('mkdir -p %s/%s/flavor_based/bstautau_not_scaled/lin/root/' %(basedir,ch))
 
 def load_mc_samples(ch, mc_samples_names, year, files_names, tree_name, tree_dir_mc, tree_dir_wsfs, tree_dir_btag_sfs, intlumi, cross_sections, trigger_selections, use_ntuples_with_sfs, compute_btag_sfs, use_ntuples_with_btag_sfs, part_samples, nevents = None):
     """Load MC samples, apply weights, and trigger selections."""

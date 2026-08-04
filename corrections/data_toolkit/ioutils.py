@@ -34,19 +34,19 @@ def get_genEventSumw(file_path):
     return sumw
 
 
-def load_mc_samples(indir, mc_samples_names, year, files_names, tree_name, nevents = None):
+def load_mc_samples(indir, mc_samples_names, year, files_names, tree_name, nevents = None, norm_to_xsec=True):
     """
         Load MC samples, apply weights, and trigger selections.
     """
     outsamples = dict()
     tree_dir_mc = indir
-
+    print(f" > {tree_dir_mc}")
     for k in mc_samples_names:
         
         file_name = os.path.join(tree_dir_mc, files_names[k]+'.root')
         checkpath(file_name, isdir=False, mustexist=True)
         
-        print(f" + {file_name}")
+        print(f" + {os.path.basename(file_name)}")
 
         # Create RDataFrame for the sample
         if not nevents:
@@ -54,6 +54,7 @@ def load_mc_samples(indir, mc_samples_names, year, files_names, tree_name, neven
         else:
             outsamples[k] = ROOT.RDataFrame(tree_name, file_name).Range(nevents)
         
+        if not norm_to_xsec: continue
         #  xsec in pb
         norm_weight = samples.luminosity_year.get(str(year), {}).get('total', -1.) * (samples._xsec_samples[k]*1000) / get_genEventSumw(file_name)
         norm_weight_relunc = norm_weight*np.sqrt( 

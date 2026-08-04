@@ -53,11 +53,11 @@ luminosity_2018 = 59.7 # in fb-1
 # -- samples
 
 data_samples_names = {
-    'mu':['data_sm'],
-    'e':['data_eg'],
-    'emu': ['data_sm','data_eg','data_meg'],
-    'mumu':['data_sm','data_dm'],
-    'ee':['data_eg']
+    'mu'    :['data_sm'],
+    'e'     :['data_eg'],
+    'emu'   :['data_sm','data_eg','data_meg'],
+    'mumu'  :['data_sm','data_dm'],
+    'ee'    :['data_eg']
 }
 channels = list(data_samples_names.keys())
 
@@ -107,6 +107,39 @@ files_names['st_antitw']    = 'ST_tW_antitop'
 files_names['bstautau']     = 'ttbarToBsToTauTau'
 files_names['bstautauext']  = 'ttbarToBsToTauTau-ext'
 
+# grouping by process
+samples_groups = {
+    'ttbar' : {
+        "samples" : ['tt_fullylep','tt_semilep','tt_had'],
+        "title"   : 't#bar{t}',
+        "colour"  : ROOT.TColor.GetColor("#5790fc"),
+    },
+    'wjets' : {
+        "samples" : ['w','wext'],
+        "title"   : 'W+jets',
+        "colour"  : ROOT.TColor.GetColor("#f89c20"),
+    },
+    'dy' : {
+        "samples" : ['dy','dyext'],
+        "title"   : 'DY',
+        "colour"  : ROOT.TColor.GetColor("#e42536"),
+    },
+    'diboson' : {
+        "samples" : ['ww','wz','zz'],
+        "title"   : 'Diboson',
+        "colour"  : ROOT.TColor.GetColor("#964a8b"),
+    },
+    'singletop' : {
+        "samples" : ['st_s','st_t','st_antit','st_tw','st_antitw'],
+        "title"   : 'Single top',
+        "colour"  : ROOT.TColor.GetColor("#9c9ca1"),
+    },
+    'bstautau' : {
+        "samples" : ['bstautau','bstautauext'],
+        "title"   : 'B_{s}#rightarrow#tau#tau',
+        "colour"  : ROOT.TColor.GetColor("#ffa90e"),
+    },
+}
 
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/XsdbTutorialSep#TTbar
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#Diboson
@@ -185,23 +218,23 @@ titles['bstautauext'] = 'B_{s}#rightarrow#tau#tau (ext)'
 
 ## colours
 colours = dict()
-colours['data_sm' ] = ROOT.kBlack
-colours['data_eg' ] = ROOT.kBlack
-colours['data_meg' ] = ROOT.kBlack
-colours['tt_fullylep' ] = ROOT.TColor.GetColor("#92dadd")
-colours['tt_semilep'  ] = ROOT.TColor.GetColor("#bd1f01")
-colours['tt_had' ] = ROOT.TColor.GetColor("#b9ac70")
-colours['ww' ] = ROOT.TColor.GetColor("#e76300")
-colours['wz'  ] = ROOT.TColor.GetColor("#717581")
-colours['zz'] = ROOT.TColor.GetColor("#832db6")
-colours['st_s'] = ROOT.TColor.GetColor("#94a4a2")
-colours['st_t'] = ROOT.TColor.GetColor("#a96b59")
-colours['st_antit'] = ROOT.TColor.GetColor("#ffa90e")
-colours['st_tw'] = ROOT.TColor.GetColor("#832db6")
-colours['st_antitw'] = ROOT.TColor.GetColor("#94a4a2")
-colours['w'] = ROOT.TColor.GetColor("#92dadd")
-colours['wext'] = ROOT.TColor.GetColor("#92dadd")
-colours['dy'] = ROOT.TColor.GetColor("#e76300")
-colours['dyext'] = ROOT.TColor.GetColor("#e76300")
-colours['bstautau'] = ROOT.TColor.GetColor("#ffa90e")
-colours['bstautauext'] = ROOT.TColor.GetColor("#ffa90e")   
+colours['data_sm' ]     = ROOT.kBlack
+colours['data_eg' ]     = ROOT.kBlack
+colours['data_meg' ]    = ROOT.kBlack
+colours['tt_fullylep']  = ROOT.TColor.GetColor("#3f90da")
+colours['tt_semilep']   = ROOT.TColor.GetColor("#bd1f01")
+colours['tt_had']       = ROOT.TColor.GetColor("#ffa90e")
+colours['ww']           = ROOT.TColor.GetColor("#94a4a2")
+colours['wz']           = ROOT.TColor.GetColor("#832db6")
+colours['zz']           = ROOT.TColor.GetColor("#a96b59")
+colours['st_s']         = ROOT.TColor.GetColor("#e76300")
+colours['st_t']         = ROOT.TColor.GetColor("#b9ac70")
+colours['st_antit']     = colours['st_t']
+colours['st_tw']        = ROOT.TColor.GetColor("#92dadd")
+colours['st_antitw']    = colours['st_tw']
+colours['w']            = ROOT.TColor.GetColor("#717581")
+colours['wext']         = colours['w']
+colours['dy']           = ROOT.TColor.GetColor("#e76300")
+colours['dyext']        = colours['dy']
+colours['bstautau']     = ROOT.TColor.GetColor("#ffa90e")
+colours['bstautauext']  = colours['bstautau']

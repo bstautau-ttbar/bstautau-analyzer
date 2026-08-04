@@ -12,6 +12,7 @@ Analysis flow :
 
 ## One-time setup
 Use `lxplus8`:
+
 ```bash
 cmsrel CMSSW_15_0_18
 cd CMSSW_15_0_18/src/
@@ -21,6 +22,10 @@ scram b -j 8
 cd $CMSSW_BASE/src
 git clone --recursive git@github.com:bstautau-ttbar/bstautau-analyzer.git -b nanoAODv15
 ```
+## At login
 
-
+```bash
+cd CMSSW_15_0_18/src/ && cmsenv
+cd bstautau-analyzer/
+```
 
