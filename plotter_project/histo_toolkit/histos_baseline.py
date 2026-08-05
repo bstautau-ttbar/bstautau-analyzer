@@ -26,56 +26,56 @@ histos_general['j_hadronFlavour'] = (ROOT.RDF.TH1DModel('j_hadronFlavour', '', 1
 '''
 
 # histo with minimum jet selection
-histos_general['selected_jets_for_histo_njets'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_njets', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_pt'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_eta'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_phi'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_m'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ma', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_puid'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_jetid'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_jetid', '', 7, 0, 7), 'Jet ID (pT > min_jet_pt)', 1)
-histos_jets['selected_jets_for_histo_deepflavB'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_deepflavB', '', 50, 0, 1), 'Jet DeepFlavB (pT > min_jet_pt)', 1)
-#histos_jets['selected_jets_for_histo_ht'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ht', '', 30, 20, 500), 'HT', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
-histos_jets_part['selected_jets_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('selected_jets_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
+histos_general['nj_sel_for_histo'] = (ROOT.RDF.TH1DModel('nj_sel_for_histo', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_pt'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_eta'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_phi'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_m'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ma', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_puid'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_jetid'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_jetid', '', 7, 0, 7), 'Jet ID (pT > min_jet_pt)', 1)
+histos_jets['j_sel_for_histo_deepflavB'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_deepflavB', '', 50, 0, 1), 'Jet DeepFlavB (pT > min_jet_pt)', 1)
+#histos_jets['j_sel_for_histo_ht'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ht', '', 30, 20, 500), 'HT', 1)
+histos_jets_part['j_sel_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
+histos_jets_part['j_sel_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
+histos_jets_part['j_sel_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
+histos_jets_part['j_sel_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
+histos_jets_part['j_sel_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
+histos_jets_part['j_sel_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
+histos_jets_part['j_sel_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('j_sel_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
 
 # histo with btagged jet selection
 
-histos_general['btagged_loose_jets_pt_above_20_for_histo_njets'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_njets', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
-histos_interesting_jets['btagged_loose_jets_pt_above_20_for_histo_pt'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
-histos_interesting_jets['btagged_loose_jets_pt_above_20_for_histo_eta'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
-histos_interesting_jets['btagged_loose_jets_pt_above_20_for_histo_phi'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
-histos_interesting_jets['btagged_loose_jets_pt_above_20_for_histo_m'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_m', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
-histos_interesting_jets['btagged_loose_jets_pt_above_20_for_histo_puid'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
-#histos_jets['btagged_loose_jets_pt_above_20_for_histo_ht'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ht', '', 30, 20, 500), 'HT', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
-histos_interesting_jets_part['btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
+histos_general['j_sel_btagL_pt20_for_histo_njets'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_njets', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
+histos_interesting_jets['j_sel_btagL_pt20_for_histo_pt'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
+histos_interesting_jets['j_sel_btagL_pt20_for_histo_eta'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
+histos_interesting_jets['j_sel_btagL_pt20_for_histo_phi'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
+histos_interesting_jets['j_sel_btagL_pt20_for_histo_m'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_m', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
+histos_interesting_jets['j_sel_btagL_pt20_for_histo_puid'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
+#histos_jets['j_sel_btagL_pt20_for_histo_ht'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ht', '', 30, 20, 500), 'HT', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
+histos_interesting_jets_part['j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
 
-histos_general['btagged_loose_jets_pt_above_30_for_histo_njets'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_njets', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_pt'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_eta'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_phi'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_m'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_m', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_puid'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_jetid'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_jetid', '', 7, 0, 7), 'Jet ID (pT > min_jet_pt)', 1)
-histos_jets['btagged_loose_jets_pt_above_30_for_histo_deepflavB'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_deepflavB', '', 50, 0, 1), 'Jet DeepFlavB (pT > min_jet_pt)', 1)
-#histos_jets['btagged_loose_jets_pt_above_30_for_histo_ht'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ht', '', 30, 20, 500), 'HT', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
-histos_jets_part['btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_30_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
+histos_general['j_sel_btagL_pt30_for_histo_njets'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_njets', '', 10, 0, 10), 'N jets (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_pt'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_pt', '', 50, 0, 200), 'Jet pT (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_eta'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_eta', '', 50, -2.5, 2.5), 'Jet eta (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_phi'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_phi', '', 50, -3.14, 3.14), 'Jet phi (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_m'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_m', '', 50, 0, 50), 'Jet mass (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_puid'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_puid', '', 5, 0, 5), 'Jet PUID (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_jetid'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_jetid', '', 7, 0, 7), 'Jet ID (pT > min_jet_pt)', 1)
+histos_jets['j_sel_btagL_pt30_for_histo_deepflavB'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_deepflavB', '', 50, 0, 1), 'Jet DeepFlavB (pT > min_jet_pt)', 1)
+#histos_jets['j_sel_btagL_pt30_for_histo_ht'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ht', '', 30, 20, 500), 'HT', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawB'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawB', '', 30, 0, 0.4), 'ParTRawB', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawC'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawC', '', 30, 0, 0.5), 'ParTRawC', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawOther'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawOther', '', 30, 0, 1), 'ParTRawOther', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawSingletau'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawSingletau', '', 30, 0, 0.6), 'ParTRawSingletau', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawTauhtaue'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawTauhtaue', '', 30, 0, 0.4), 'ParTRawTauhtaue', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawTauhtauh'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawTauhtauh', '', 30, 0, 0.4), 'ParTRawTauhtauh', 1)
+histos_jets_part['j_sel_btagL_pt30_for_histo_ParTRawTauhtaumu'] = (ROOT.RDF.TH1DModel('j_sel_btagL_pt30_for_histo_ParTRawTauhtaumu', '', 30, 0, 0.2), 'ParTRawTauhtaumu', 1)
 
 
 
@@ -181,56 +181,56 @@ histos_test = {
         'e1_pt'  : (ROOT.RDF.TH1DModel('e1_pt', '', 20, 0, 200), 'electron p_{T} (GeV)', 1),
         'mu1_pt' : (ROOT.RDF.TH1DModel('mu1_pt', '', 20, 0, 200), 'muon p_{T} (GeV)', 1),
         'inv_mass' : (ROOT.RDF.TH1DModel('inv_mass', '', 50, 10, 200), 'inv mass', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac'             : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_part_all_sig_frac'             : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
     },
     'ee' : {
         'e1_pt'  : (ROOT.RDF.TH1DModel('e1_pt', '', 20, 0, 200), 'leading electron p_{T} (GeV)', 1),
         'e2_pt'  : (ROOT.RDF.TH1DModel('e2_pt', '', 20, 0, 200), 'subleading electron p_{T} (GeV)', 1),
         #'inv_mass' : (ROOT.RDF.TH1DModel('inv_mass', '', 50, 10, 200), 'inv mass', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
-        #`'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
-        #`'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
-        #`'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
+        #`'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
+        #`'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
+        #`'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
     },
     'mumu' : {
         'mu1_pt' : (ROOT.RDF.TH1DModel('mu1_pt', '', 20, 0, 200), 'leading muon p_{T} (GeV)', 1),
         'mu2_pt' : (ROOT.RDF.TH1DModel('mu2_pt', '', 20, 0, 200), 'subleading muon p_{T} (GeV)', 1),
         #'inv_mass' : (ROOT.RDF.TH1DModel('inv_mass', '', 50, 10, 200), 'inv mass', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
     },
     'e' : {
         'e1_pt'  : (ROOT.RDF.TH1DModel('e1_pt', '', 20, 0, 200), 'electron p_{T} (GeV)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
     },
     'mu' : {
         'mu1_pt' : (ROOT.RDF.TH1DModel('mu1_pt', '', 20, 0, 200), 'muon p_{T} (GeV)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
-        #'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_part_all_sig_frac' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general' : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (general)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked'   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (decay-specific)', 1),
+        #'j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaumu_frac_masked', '', 40, 0, 1), 'ParT #tau_{h}#tau_{#mu} frac (decay-specific)', 1),
     }
 }

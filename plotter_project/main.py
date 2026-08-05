@@ -6,7 +6,8 @@ Data is not well saved in the root file if you don't run with --noblinding optio
 # new imports
 import argparse
 import os, sys
-import time, datetime
+import time
+from datetime import datetime
 import multiprocessing
 
 import ROOT
@@ -16,25 +17,7 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning
 
 import utils
 import histo_toolkit as htools
-sys.path.append('../corrections') #FIXME
 import data_toolkit as data
-
-# old imports
-from io_utils import *
-#from samples import *
-import samples as info_samples
-from selection import *
-from weights import *
-from sf_electron import *
-from sf_muon import *
-from sf_trigger_dilepton import *
-from sf_computation import *
-from utils import *
-from plotting_utils import *
-from histos_part import histos_combined_scores, histos_max_scores
-from part_scores_functions import *
-from plotting_flavourbased_utils import *
-from histos_part_selections import histos_part_selections
 # ------------
 
 # FIXME : TO_DO
@@ -91,17 +74,13 @@ def parse_arguments():
                         help='List of channel(s) to process, e.g --channels emu mu or --channels emu'
                         )
     parser.add_argument('--year', 
-                        default=defaults_["year"], choices=info_samples.years, 
+                        default=defaults_["year"], choices=data.samples.years, 
                         type = str, 
                         help='Year of data taking'
                         )
     parser.add_argument('--flavor', 
                         action='store_true', 
                         help='Enable flavor-based histograms'
-                        )
-    parser.add_argument('--make_histos', 
-                        action='store_true', 
-                        help='Enable sample-based histograms'
                         )
     parser.add_argument('--noblinding', 
                         action='store_true', 
@@ -119,13 +98,25 @@ def parse_arguments():
                         action='store_true', 
                         help='Enable ParT sequential cuts plots (ParTRawTauhtaumu_frac > 0.6)'
                         )
+    parser.add_argument('--dryrun', 
+                        action='store_true', 
+                        help='Do not produce the output plots.'
+                        )
     parser.add_argument('--mc_only', 
                         action='store_true', 
                         help='Skip data samples and run on MC only'
                         )
-    parser.add_argument('--test', 
+    parser.add_argument('-N', '--Nevents',
+                        type=int, default=None,
+                        help='MAX number of events to process None: all events.'
+                        )
+    parser.add_argument('--test_samples', 
                         action='store_true', 
-                        help='Run a quick test with only signal sample'
+                        help='Run only on signal and ttbar samples for quick testing'
+                        )
+    parser.add_argument('--test_histos', 
+                        action='store_true', 
+                        help='Run only on a subset of histograms for quick testing'
                         )
     return parser.parse_args()
 
@@ -150,43 +141,43 @@ if __name__ == '__main__':
     #channels             = channels[0].split(',')
     year                 = args.year
     flavor               = args.flavor
-    make_histos          = args.make_histos
+    make_histos          = not args.dryrun
     blinddata            = not args.noblinding
     part_samples         = not args.not_part_samples
     plot_all_jets        = args.plot_all_jets
     plot_part_selections = args.plot_part_selections
     mc_only              = args.mc_only
-    _testmode_           = args.test
-    nevents              = 1000 if _testmode_ else None
+    _testmode_           = args.test_samples
+    test_histos          = args.test_histos
+    nevents              = args.Nevents
     
     # multithreading setup
     setup_multithreading(nevents)
 
     # input samples
-    tree_dir_base = in_info.get('MC', {}).get('inpath_template_wsfs', None) #FIXME put SFs path
+    tree_dir_base = in_info.get('MC', {}).get('inpath_template_wsfs', None)
 
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
-        utils.logger.print_info(" TEST MODE ENABLED")
-    used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau'] # FIXME : temporary for testing
+        utils.logger.print_info("TEST MODE: only processing a subset of MC samples for quick testing")
+        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau']
     
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 
     # output plots
-    out_dir_base  = './plots/plots{year}_{label}' if _testmode_ else in_info.get('common', {}).get('outpath_template', None) #FIXME : add outpath_template to yml file
+    out_dir_base  = './plots/test_{year}_{label}' if _testmode_ else in_info.get('common', {}).get('outpath_template', None)
     label = "_".join(filter(None, [
         year, 
         "test" if _testmode_ else None,
         datetime.now().strftime('%d%b%Y_%Hh%Mm%Ss')
         ]))
-    out_dir = out_dir_base.format(year=year, label=label)
-    hitsos_to_plot = htools.histos_baseline.histos_test #htools.histos_baseline.histos if not _testmode_ else htools.histos_baseline.histos_test  #FIXME to test
-    make_directories_for_plots(out_dir, channels)
-
+    out_dir         = out_dir_base.format(year=year, label=label)
+    hitsos_to_plot = htools.histos_baseline.histos_test if test_histos else htools.histos_baseline.histos
+    if make_histos:
+        htools.io.make_directories_for_plots(out_dir, channels, flavor_based=flavor)
 
     samples   = dict()
     tree_name = in_info.get('common', {}).get('treename', 'Events')
-
     # --> LOOP ON CHANNELS
     for ch in channels:
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
@@ -207,21 +198,12 @@ if __name__ == '__main__':
         )
         samples[ch].update(mc_samples)
         
-        if not mc_only:
-            print(" ... loading data samples")
-            utils.logger.print_warning("Not yet implemented ...")
-            sys.exit(0)
-            #data_samples = data.ioutils.load_data_samples(
-            #    tree_dir,
-            #    data.samples.data_samples_names,
-            #    year,
-            #    data.samples.files_names,
-            #    tree_name,
-            #    nevents = nevents
-            #)
-            #samples[ch].update(data_samples)
+        # DATA - FIXME : implement
+        if not (mc_only or _testmode_):
+            print(" ... loading DATA samples")
+            print("NOT IMPLEMENTED YET")
         else :
-            logger.print_warning(" MC ONLY mode enabled, skipping data samples")
+            utils.logger.print_warning(" MC ONLY mode enabled, skipping data samples")
         
 
         utils.logger.print_bold(f"\n--> PROCESSING SAMPLES")
@@ -246,8 +228,8 @@ if __name__ == '__main__':
                 samples[ch][name] = data.defutils.define_bstautau_taudecaymodes_mask(samples[ch][name])
             
             # Define  total event-weight
-            if 'data' not in name: # FIXME implement correctly
-                weight_str = data.defutils.build_weight_string(name, info_samples.files_names, sf=True, btag_sfs=False)
+            if 'data' not in name: # FIXME implement
+                weight_str = data.defutils.build_weight_string(name, data.samples.files_names, sf=True, btag_sfs=False)
                 print(f"Applying weights to {name}: {weight_str}")
                 samples[ch][name] = samples[ch][name].Define('tot_weight', weight_str)
 
@@ -282,34 +264,46 @@ if __name__ == '__main__':
                     histos[ch].update(histos_max_scores)
                     #histos_flavor[ch].update(histos_max_scores) Not really easy to do because they are filtered in a weird way and I would need to define also hadronFlavor with the same filter
         # -- end loop on samples
-
-        logger.print_bold(f"\n-- PLOTTING --")
+        if not make_histos: 
+            utils.logger.print_warning("Dry-run mode enabled, skipping histogram creation and plotting")
+            continue
+        utils.logger.print_bold(f"\n-- PLOTTING --")
         print(" > creating histogram definitions ...")
+        
         # Initialize all histogram definitions BEFORE processing (lazy setup)
         temp_hists = None
         temp_flavor_hists = None
+        print(" > sample-based ")
+        temp_hists = htools.plotting_utils.initialize_histograms(hitsos_to_plot, samples, ch, sys_uncertainty=False)
         
-        if make_histos:
-            print(" > sample-based ")
-            temp_hists = initialize_histograms(hitsos_to_plot, samples, ch, sys_uncertainty=False)
-            print(temp_hists)
-            if flavor:
-                print(" > flavor-based ")
-                temp_flavor_hists = initialize_flavor_histograms(hitsos_to_plot, samples, ch)
+        if not temp_hists:
+            utils.logger.print_error(f" In histogram initialization for channel {ch}. SKIPPING...")
+            continue
+        
+        if flavor:
+            print(" > flavor-based ")
+            temp_flavor_hists = htools.plotting_flavourbased_utils.initialize_flavor_histograms(hitsos_to_plot, samples, ch)
 
         print(" > plotting histograms ...")
-        c1, main_pad, ratio_pad = create_canvas_with_pads()
-        
-        if make_histos and temp_hists:
-            process_histograms(hitsos_to_plot, temp_hists, samples, ch, info_samples.colours, out_dir, info_samples.titles, main_pad, ratio_pad, c1, blinddata, mconly=mc_only)
+        c1, main_pad, ratio_pad = htools.plotting_utils.create_canvas_with_pads()
+        htools.plotting_utils.process_histograms(
+            hitsos_to_plot, temp_hists, 
+            samples, ch, 
+            data.samples.colours, 
+            out_dir, 
+            data.samples.titles, 
+            main_pad, ratio_pad, c1, 
+            blinddata, 
+            mconly=mc_only
+        )
 
         if flavor and temp_flavor_hists:
-            process_flavor_histograms(hitsos_to_plot, temp_flavor_hists, ch, out_dir, main_pad, ratio_pad, c1, info_samples.colours, blinddata)
+            htools.plotting_flavourbased_utils.process_flavor_histograms(hitsos_to_plot, temp_flavor_hists, ch, out_dir, main_pad, ratio_pad, c1, info_samples.colours, blinddata)
 
         print("-------- DONE --------")
     # end of channel loop
     
-    logger.print_success(f"\n Output plot in {out_dir}")
+    utils.logger.print_success(f"\n Output plot in {out_dir}")
 
     elapsed_time = time.time() - start_time
     utils.logger.print_bold(f"\n>>> DONE AFTER {elapsed_time//60:.0f}m {elapsed_time%60:.0f}s <<<")

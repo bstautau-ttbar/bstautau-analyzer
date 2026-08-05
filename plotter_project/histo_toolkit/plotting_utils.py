@@ -1,14 +1,13 @@
 import ROOT
 import math
-from datetime import datetime
-from cmsstyle import CMS_lumi
-from officialStyle import officialStyle
+from .cmsstyle import CMS_lumi #FIXME hardcoded year
+from .officialStyle import officialStyle
 from blinding_utils import apply_data_blinding_to_histogram, should_apply_blinding
 
 officialStyle(ROOT.gStyle, ROOT.TGaxis)
 
-
-def create_canvas_with_pads():
+# ----------------- UTILITY FUNCTIONS -----------------
+def create_canvas_with_pads(): #FIXME use central CMSSTYLE
     """
     Creates a ROOT canvas with two pads: a main pad and a ratio pad.
     
@@ -36,33 +35,6 @@ def create_canvas_with_pads():
     
     return c1, main_pad, ratio_pad
 
-def initialize_histograms(histos, samples, ch, norm_weight = 'tot_weight', sys_uncertainty = True):
-    temp_hists = {}
-    
-    for k, v in histos[ch].items():
-        temp_hists[k] = {}
-        for kk, vv in samples[ch].items():
-            branch_name = k
-            temp_hists[k][f'{k}_{kk}'] = vv.Histo1D(v[0], branch_name, norm_weight)
-            
-            # stat + systematic error
-            if 'data' in kk or not sys_uncertainty: continue
-            tmp_histUp   = vv.Histo1D(v[0], branch_name, norm_weight+'Up')
-            tmp_histDown = vv.Histo1D(v[0], branch_name, norm_weight+'Down')
-            for ibin in range(temp_hists[k][f'{k}_{kk}'].GetNbinsX()): 
-                ths_sys  = 0.5*abs(tmp_histUp.GetBinContent(ibin+1) - tmp_histDown.GetBinContent(ibin+1)) 
-                ths_stat = temp_hists[k][f'{k}_{kk}'].GetBinError(ibin+1)
-                ths_err = math.sqrt(ths_stat**2 + ths_sys**2)
-                
-                #print(f'\t\t\t{ibin+1} {temp_hists[k][f'{k}_{kk}'].GetBinContent(ibin+1):.3f} +/- {ths_sys:.3f} (sys) +/- {ths_stat:.3f} (stat)')
-                if math.isnan(ths_err): print('WARNING - nan in the error')
-                temp_hists[k][f'{k}_{kk}'].SetBinError(ibin+1, ths_err )
-            
-            tmp_histUp.Clear()
-            tmp_histDown.Clear()
-    return temp_hists
-
-
 def set_histogram_style(hist, x_title, y_title, fill_color, line_color):
     hist.GetXaxis().SetTitle(x_title)
     hist.GetYaxis().SetTitle(y_title)
@@ -79,9 +51,54 @@ def create_legend(temp_hists, samples_for_legend, titles):
     leg.SetNColumns(3)
     k = list(temp_hists.keys())[0]
     for kk in samples_for_legend:
-        leg.AddEntry(temp_hists[k]['%s_%s' %(k, kk)].GetValue(), titles[kk], 'EP' if 'data' in kk else ('L' if 'bstautau' in kk else 'F'))
+        leg.AddEntry(
+            temp_hists[k]['%s_%s' %(k, kk)].GetValue(), 
+            titles[kk], 
+            'EP' if 'data' in kk else ('L' if 'bstautau' in kk else 'F')
+        )
 
     return leg
+
+# ----------- PROCESSING HISTOGRAMS AND PLOTTING ----------------
+
+def initialize_histograms(histos, samples, ch, norm_weight = 'tot_weight', sys_uncertainty = True):
+    """
+        Initialize the histograms for a given channel and set of samples
+        Args:
+            histos (dict): Dictionary containing histogram definitions. "xvar" : (TH1DModel, 'x label', log-scale)
+            samples (dict): Dictionary containing sample data.
+            ch (str): Channel name.
+            norm_weight (str): Normalization weight for the histograms.
+            sys_uncertainty (bool): Flag to include systematic uncertainties. 
+
+        Returns:
+            dict: A dictionary containing the initialized histograms for each variable and sample. "xvar" : { "sample_name" : TH1D, ... }
+    """
+    temp_hists = {}
+    # loop on the histogams
+    for xvar, htmpl in histos[ch].items():
+        temp_hists[xvar] = {}
+        for sname, vv in samples[ch].items():
+            branch_name = xvar
+            temp_hists[xvar][f'{xvar}_{sname}'] = vv.Histo1D(htmpl[0], branch_name, norm_weight)
+            
+            # stat + systematic error
+            if 'data' in sname or not sys_uncertainty: continue
+            tmp_histUp   = vv.Histo1D(htmpl[0], branch_name, norm_weight+'Up')
+            tmp_histDown = vv.Histo1D(htmpl[0], branch_name, norm_weight+'Down')
+            for ibin in range(temp_hists[xvar][f'{xvar}_{sname}'].GetNbinsX()): 
+                ths_sys  = 0.5*abs(tmp_histUp.GetBinContent(ibin+1) - tmp_histDown.GetBinContent(ibin+1)) 
+                ths_stat = temp_hists[xvar][f'{xvar}_{sname}'].GetBinError(ibin+1)
+                ths_err = math.sqrt(ths_stat**2 + ths_sys**2)
+                
+                #print(f'\t\t\t{ibin+1} {temp_hists[xvar][f\'{xvar}_{sname}\'].GetBinContent(ibin+1):.3f} +/- {ths_sys:.3f} (sys) +/- {ths_stat:.3f} (stat)')
+                if math.isnan(ths_err): print('WARNING - nan in the error')
+                temp_hists[xvar][f'{xvar}_{sname}'].SetBinError(ibin+1, ths_err )
+            
+            tmp_histUp.Clear()
+            tmp_histDown.Clear()
+    return temp_hists
+
 
 def compute_ratio_plot(temp_hists, ratio, stats, ratio_pad):
     ratio_pad.cd()
@@ -114,7 +131,7 @@ def compute_ratio_plot(temp_hists, ratio, stats, ratio_pad):
     return ratio_stats, norm_stack,line, ratio
 
 
-def get_data_sample_name(ch):
+def get_data_sample_name(ch): # FIXME take it from the samples.py
     return 'data_sm' if ch in ['emu', 'mumu', 'mu'] else 'data_eg'
 
 
@@ -133,22 +150,22 @@ def style_histograms(temp_hists, k, v, colours):
         set_histogram_style(ihist, v[1], 'events', color, color)
 
 
-def create_histogram_stacks(temp_hists, k, blinding):
+def create_histogram_stacks(temp_hists, x, blinding):
     """Creates histogram stacks for the given channel, both data and MC."""
-    ths1 = ROOT.THStack('stack', '')
-    data_ths = ROOT.THStack('data_stack', '')
-
-    for key, ihist in temp_hists[k].items():
-        if f'{k}_data' in key:
-            continue
+    # FIXME group together same MC samples
+    mc_ths     = ROOT.THStack('stack', '')
+    data_ths   = ROOT.THStack('data_stack', '')
+    
+    # loop on samples
+    for key, ihist in temp_hists[x].items():
+        if f'{x}_data' in key: continue
         ihist.Draw('hist same')
-        #if "bstautau" not in key:
-        ths1.Add(ihist.GetValue())
+        if "bstautau" not in key:
+            mc_ths.Add(ihist.GetValue())
+    mc_ths.SetMinimum(0.0001)
 
-    ths1.SetMinimum(0.0001)
-
-    for key, ihist in temp_hists[k].items():
-        if f'{k}_data' not in key:
+    for key, ihist in temp_hists[x].items():
+        if f'{x}_data' not in key:
             continue
         
         # CRITICAL: Clone the histogram for display only - don't modify the original
@@ -156,15 +173,15 @@ def create_histogram_stacks(temp_hists, k, blinding):
         
         
         # Apply blinding ONLY to the display clone, not the original
-        if should_apply_blinding(k) and blinding:
-            apply_data_blinding_to_histogram(display_hist, k)
+        if should_apply_blinding(x) and blinding:
+            apply_data_blinding_to_histogram(display_hist, x)
         
         display_hist.Draw('hist same')
         display_hist.SetLineWidth(0)
         data_ths.Add(display_hist)  # Use the cloned version for display
 
 
-    return ths1, data_ths
+    return mc_ths, data_ths
 
 
 def draw_stat(ths1):
@@ -271,27 +288,28 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
     
     # Create channel folder in ROOT file
     channel_folder = root_file.mkdir(ch)
-    
-    for i, (k, v) in enumerate(histos[ch].items()):
-        print(f" ({i+1}/{len(histos[ch])}) - {k}")
+    for i, (xvar, v) in enumerate(histos[ch].items()):
+        print(f" ({i+1}/{len(histos[ch])}) - {xvar}")
         c1.cd()
+
+        # create legend
         data_smpl           = get_data_sample_name(ch) if not mconly else None
         samples_for_legend  = get_samples_for_legend(samples, ch, data_smpl)
         leg                 = create_legend(temp_hists, samples_for_legend, titles)
 
-        ## plotting main pad
+        # plotting main pad
         main_pad.cd()
         main_pad.SetLogy(False)
 
-        style_histograms(temp_hists, k, v, colours)
+        style_histograms(temp_hists, xvar, v, colours)
         
-        # Create histogram stacks
-        ths1, data_ths = create_histogram_stacks(temp_hists, k, blinding)
-        ths1.Draw('hist')
+        # stack
+        mc_ths, data_ths = create_histogram_stacks(temp_hists, xvar, blinding)
+        mc_ths.Draw('hist')
         
         # Calculate desired maximum for Y-axis range (considering all scenarios)
-        if ths1.GetStack() and ths1.GetStack().Last():
-            mc_max = ths1.GetStack().Last().GetMaximum()
+        if mc_ths.GetStack() and mc_ths.GetStack().Last():
+            mc_max = mc_ths.GetStack().Last().GetMaximum()
         else:
             mc_max = 1
             
@@ -300,16 +318,14 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         else:
             data_max = 1
 
-        print(f"MC max: {mc_max}, Data max: {data_max}")
-        
         # For BsTauTau plots, calculate max considering both scaled and unscaled versions
-        if f'{k}_bstautau' in temp_hists[k]:
-            bstautau_hist = temp_hists[k][f'{k}_bstautau'].GetValue()
+        if f'{xvar}_bstautau' in temp_hists[xvar]:
+            bstautau_hist = temp_hists[xvar][f'{xvar}_bstautau'].GetValue()
             bstautau_unscaled_max = bstautau_hist.GetMaximum()
             
             # Calculate what the scaled max would be using MC INTEGRAL (back to original)
-            if ths1.GetStack() and ths1.GetStack().Last():
-                mc_integral = ths1.GetStack().Last().Integral()
+            if mc_ths.GetStack() and mc_ths.GetStack().Last():
+                mc_integral = mc_ths.GetStack().Last().Integral()
                 scale_factor = mc_integral / bstautau_hist.Integral() if bstautau_hist.Integral() > 0 else 1
                 bstautau_scaled_max = bstautau_unscaled_max * scale_factor
             else:
@@ -321,8 +337,8 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
             desired_max = 1.5 * max(mc_max, data_max)
         
         # Get X-axis range from the histogram
-        x_min = ths1.GetXaxis().GetXmin()
-        x_max = ths1.GetXaxis().GetXmax()
+        x_min = mc_ths.GetXaxis().GetXmin()
+        x_max = mc_ths.GetXaxis().GetXmax()
         
         # Clear and redraw with fixed Y-axis range
         main_pad.Clear()
@@ -333,39 +349,38 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         frame.GetYaxis().SetTitle('events')
         
         # Draw histogram on top of the fixed frame
-        ths1.Draw('hist same')
+        mc_ths.Draw('hist same')
 
-        stats = draw_stat(ths1)
+        stats = draw_stat(mc_ths)
         has_data = bool(data_ths.GetStack() and data_ths.GetStack().Last())
         if has_data:
             data_ths.GetStack().Last().SetLineColor(ROOT.kBlack)
             data_ths.GetStack().Last().Draw('EP same')
 
-        #leg.AddEntry(stats, 'stat. unc.', 'F')
-        leg.AddEntry(stats, 'tot. unc.', 'F')
+        leg.AddEntry(stats, 'stat. unc.', 'F')
         leg.Draw('same')
 
         # CRITICAL: Save histograms to ROOT file BEFORE any scaling to preserve original integrals
-        save_histograms_to_root_file(channel_folder, k, ths1, data_ths, temp_hists)
+        save_histograms_to_root_file(channel_folder, xvar, mc_ths, data_ths, temp_hists)
 
         # IMPORTANT: Plot unscaled version FIRST, then scaled version
         # because scaling modifies the histogram permanently
         
         # Version 1: BsTauTau at original scale (not scaled to MC) - PLOT FIRST
-        if f'{k}_bstautau' in temp_hists[k].keys():
-            style_and_draw_bstautau(temp_hists, k, ths1, colours, scale_to_mc=False)
+        if f'{xvar}_bstautau' in temp_hists[xvar].keys():
+            style_and_draw_bstautau(temp_hists, xvar, mc_ths, colours, scale_to_mc=False)
 
-        CMS_lumi(main_pad, 4, 0, cmsText='CMS', extraText=' Preliminary', lumi_13TeV='L = 59.7 fb^{-1}')
+        CMS_lumi(main_pad, 4, 0, cmsText='CMS', extraText=' Preliminary', lumi_13TeV='59.7 fb^{-1}')
         main_pad.cd()
 
         if has_data:
             ratio = data_ths.GetStack().Last().Clone()
             ratio.Divide(stats)
-            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[k], ratio, stats, ratio_pad)
+            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[xvar], ratio, stats, ratio_pad)
         else: # fill with dummy histogram to avoid crash
             ratio = ROOT.TH1F('ratio', '', 1, x_min, x_max)
             ratio.Fill(0.5, 1.)
-            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[k], ratio, stats, ratio_pad)
+            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[xvar], ratio, stats, ratio_pad)
         ratio_pad.cd()
         norm_stack.Draw('hist same')
         ratio_stats.Draw('E2')
@@ -375,10 +390,10 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         ratio.Draw('EP same')
 
         # Save unscaled version in all formats (linear and log)
-        save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="_unscaled")
+        save_plot_versions(c1, basedir, ch, xvar, main_pad, scale_suffix="_unscaled")
 
         # Version 2: BsTauTau scaled to data (current behavior) - PLOT SECOND
-        if f'{k}_bstautau' in temp_hists[k].keys():
+        if f'{xvar}_bstautau' in temp_hists[xvar].keys():
             # Clear and redraw everything with scaling
             c1.cd()
             main_pad.cd()
@@ -390,14 +405,14 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
             frame.GetYaxis().SetTitle('events')
             
             # Redraw the main plot components on the fixed frame
-            ths1.Draw('hist same')
+            mc_ths.Draw('hist same')
             stats.Draw('E2 SAME')
             if has_data:
                 data_ths.GetStack().Last().Draw('EP same')
             leg.Draw('same')
 
             # Draw BsTauTau WITH scaling (this will modify the histogram permanently)
-            style_and_draw_bstautau(temp_hists, k, ths1, colours, scale_to_mc=True)
+            style_and_draw_bstautau(temp_hists, xvar, mc_ths, colours, scale_to_mc=True)
 
             CMS_lumi(main_pad, 4, 0, cmsText='CMS', extraText=' Preliminary', lumi_13TeV='L = 59.7 fb^{-1}')
 
@@ -413,11 +428,11 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
                 ratio.Draw('EP same')
             
             # Save scaled version in all formats (linear and log)
-            save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="_scaled")
+            save_plot_versions(c1, basedir, ch, xvar, main_pad, scale_suffix="_scaled")
 
         else:
             # For plots without BsTauTau, just save the regular version
-            save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix="")
+            save_plot_versions(c1, basedir, ch, xvar, main_pad, scale_suffix="")
 
         # ROOT file already saved above before any scaling
 

@@ -11,7 +11,7 @@ Analysis flow :
 
 
 ## One-time setup
-Use `lxplus8`:
+Use `lxplus8`, get the CMSSW release and compile:
 
 ```bash
 cmsrel CMSSW_15_0_18
@@ -19,13 +19,18 @@ cd CMSSW_15_0_18/src/
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 cmsenv
 scram b -j 8
+```
+Obtain this branch and install the python shared libraries
+```bash
 cd $CMSSW_BASE/src
 git clone --recursive git@github.com:bstautau-ttbar/bstautau-analyzer.git -b nanoAODv15
+pip3 install -e .
 ```
 ## At login
 
 ```bash
 cd CMSSW_15_0_18/src/ && cmsenv
 cd bstautau-analyzer/
+pip3 install -e . # not sure
 ```
 

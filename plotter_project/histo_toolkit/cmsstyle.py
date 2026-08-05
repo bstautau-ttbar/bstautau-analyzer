@@ -7,7 +7,7 @@ import ROOT as rt
 def CMS_lumi(pad, iPeriod, iPosX, cmsText = "CMS", extraText = 'Work in Progress', 
              lumi_13TeV = "2018, L = 59.7 fb^{-1}", lumi_8TeV  = "19.7 fb^{-1}", lumi_7TeV  = "5.1 fb^{-1}", verbose = False):
 
-    cmsText = cmsText
+    cmsText     = cmsText
     cmsTextFont = 61  
 
     writeExtraText = True

@@ -213,7 +213,12 @@ titles['st_tw'] = 'ST_tW_top'
 titles['st_antitw'] = 'ST_tW_antitop'
 titles['bstautau'] = 'B_{s}#rightarrow#tau#tau'
 titles['bstautauext'] = 'B_{s}#rightarrow#tau#tau (ext)'
-
+# channels
+titles['emu'] = 'e#mu'
+titles['mumu'] = '#mu#mu'
+titles['ee'] = 'ee'
+titles['mu'] = '#mu'
+titles['e'] = 'e'
 
 
 ## colours

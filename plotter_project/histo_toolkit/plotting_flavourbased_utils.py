@@ -1,6 +1,6 @@
 import ROOT
-from samples import data_samples_names
-from plotting_utils import set_histogram_style, CMS_lumi, compute_ratio_plot, officialStyle, draw_stat
+from data_toolkit.samples import data_samples_names
+from .plotting_utils import set_histogram_style, CMS_lumi, compute_ratio_plot, officialStyle, draw_stat
 from blinding_utils import apply_data_blinding_to_histogram, should_apply_blinding
 
 def initialize_flavor_histograms(histos, samples, ch):
