@@ -147,7 +147,7 @@ def style_histograms(temp_hists, k, v, colours):
         sample_name = key.split(k + '_')[1]
         is_data = f'{k}_data' in key
         color = ROOT.kWhite if is_data else colours.get(sample_name, ROOT.kBlack)
-        set_histogram_style(ihist, v[1], 'events', color, color)
+        set_histogram_style(ihist, v[1], 'Events', color, color)
 
 
 def create_histogram_stacks(temp_hists, x, blinding):
@@ -257,10 +257,13 @@ def save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix=""):
     
     # Set maximum for log scale
     log_max = current_max * 1000
+    log_min = 1e-0 # Avoid log(0)
     for obj in pad_primitives:
         if hasattr(obj, 'SetMaximum'):
             obj.SetMaximum(log_max)
-    
+        if hasattr(obj, 'SetMinimum'):
+            obj.SetMinimum(log_min)
+
     c1.Modified()
     c1.Update()
     
@@ -275,6 +278,8 @@ def save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix=""):
     for obj in pad_primitives:
         if hasattr(obj, 'SetMaximum'):
             obj.SetMaximum(current_max)
+        if hasattr(obj, 'SetMinimum'):
+            obj.SetMinimum(1e-4)
     c1.Modified()
     c1.Update()
 
@@ -288,7 +293,7 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
     
     # Create channel folder in ROOT file
     channel_folder = root_file.mkdir(ch)
-    for i, (xvar, v) in enumerate(histos[ch].items()):
+    for i, (xvar, templ) in enumerate(histos[ch].items()):
         print(f" ({i+1}/{len(histos[ch])}) - {xvar}")
         c1.cd()
 
@@ -301,7 +306,7 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         main_pad.cd()
         main_pad.SetLogy(False)
 
-        style_histograms(temp_hists, xvar, v, colours)
+        style_histograms(temp_hists, xvar, templ, colours)
         
         # stack
         mc_ths, data_ths = create_histogram_stacks(temp_hists, xvar, blinding)
@@ -345,7 +350,7 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         
         # Draw frame with desired Y-axis range
         frame = main_pad.DrawFrame(x_min, 0.0001, x_max, desired_max)
-        frame.GetXaxis().SetTitle(v[1])
+        frame.GetXaxis().SetTitle(templ[1])
         frame.GetYaxis().SetTitle('events')
         
         # Draw histogram on top of the fixed frame
@@ -401,8 +406,8 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
             
             # Apply the same frame strategy for the scaled version
             frame = main_pad.DrawFrame(x_min, 0.0001, x_max, desired_max)
-            frame.GetXaxis().SetTitle(v[1])
-            frame.GetYaxis().SetTitle('events')
+            frame.GetXaxis().SetTitle(templ[1])
+            frame.GetYaxis().SetTitle('Events')
             
             # Redraw the main plot components on the fixed frame
             mc_ths.Draw('hist same')

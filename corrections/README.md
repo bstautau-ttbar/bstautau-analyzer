@@ -1,9 +1,9 @@
 # Preselection and MC correction for $Bs\to\tau\tau$
 
-## Main usage: apply $\bar tt$ preselection and SF corrections
+## Main usage: apply $t\bar t$ preselection and SF corrections
 
 ```bash
-python main.py --input <inputs/data-info.yml> [--outdirectory <path>] [--channels <ch1> <ch2> ...] [--test]
+python main.py --input <inputs/data-info.yml> [--outdirectory <path>] [--channels <ch1> <ch2> ...] [--mc_only] [-N <int>] [--test_samples]
 ```
 
 | Option | Short | Default | Description |
@@ -11,12 +11,16 @@ python main.py --input <inputs/data-info.yml> [--outdirectory <path>] [--channel
 | `--input` | `-i` | required | `.yml` file with input ntuple locations and metadata from `inputs/` folder |
 | `--outdirectory` | `-o` | from `.yml` | Output directory for corrected ntuples (overrides `.yml` value) |
 | `--channels` | | `emu` | One or more decay channels to process. Supported channels: `mu`, `e`, `emu`, `mumu`, `ee` and space-separated list of any subset. |
-| `--test` | `-t` | off | Test mode: runs on a single MC sample and few events |
+|`--mc_only`| | `False` | Skip data |
+|`--Nevents`| `-N` | `None` | MAX number of events to process. None: all events |
+| `--test_samples` | | `False` | Run on few samples : $t\bar t$ fullylep, semilep and $B_s\tau\tau$ signal. |
 
-**Example:** running on custom-nanoAODv9 ntuples with ParT-tagger inference 
+
+**Example:** running on a test production of custom-nanoAODv15 ntuples with ParT-tagger inference 
 ```bash
-python3 main.py --input inputs/datamc_2018-v0.yml --channels emu ee mumu e mu
-```
+python3 main.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --mc_only  --test_samples
+``` 
+
 
 ### Input configuration file
 

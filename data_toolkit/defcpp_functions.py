@@ -20,20 +20,50 @@ double compute_mt(double pt, double phi, double met, double met_phi) {
 # Add helper function to sort and take top N jets by pT
 ROOT.gInterpreter.Declare("""
 template<typename T>
-ROOT::VecOps::RVec<T> takeTopNByPt(const ROOT::VecOps::RVec<T>& values, 
+ROOT::VecOps::RVec<T> take_top_N_byVar(const ROOT::VecOps::RVec<T>& values, 
                                     const ROOT::VecOps::RVec<float>& pts, 
                                     int n = 2) {
     auto indices = ROOT::VecOps::Argsort(pts, [](float a, float b) { return a > b; });
     ROOT::VecOps::RVec<T> result;
     for (int i = 0; i < std::min(n, (int)indices.size()); i++) {
-        //std::cout<< "Taking jet with pt: " << pts[indices[i]] << std::endl;                  
+        std::cout<< "Taking jet with pt: " << pts[indices[i]] << std::endl;                  
         result.push_back(values[indices[i]]);
     }
     return result;
 }
 """)
 
+ROOT.gInterpreter.Declare("""
+// N jets with HIGHEST var
+ROOT::VecOps::RVec<int> get_topNbyVar_mask(const ROOT::VecOps::RVec<float>& var, int n = 2) {
+    auto indices = ROOT::VecOps::Argsort(var, [](float a, float b) { return a > b; });
+    ROOT::RVec<int> mask(var.size(), 0);
+    for (int i = 0; i < std::min(n, (int)indices.size()); i++) {
+        //std::cout<< i << " var= " << var[indices[i]] << " ijet " << indices[i] << std::endl;
+        mask[indices[i]] = 1;
+    }
+    return mask;
+}
+// among N jets with HIGHEST var selcted by sel
+ROOT::VecOps::RVec<int> get_topNbyVarSel_mask(const ROOT::VecOps::RVec<float>& var,
+                                                const ROOT::VecOps::RVec<int>& sel,
+                                                int n = 2) {
+    auto indices = ROOT::VecOps::Argsort(var, [](float a, float b) { return a > b; });
+    ROOT::RVec<int> mask(var.size(), 0);
+    int count = 0;
+    for (size_t i = 0; i < std::min(n, (int)indices.size()) && count < n; i++) {
+        int idx = indices[i];
+        if (sel[idx] != 0) {
+            mask[idx] = 1;
+            ++count;
+        }
+    }
+    return mask;
+}
+""")
 
+
+# ------ Bs MC matching ------
 ROOT.gInterpreter.Declare("""
 ROOT::RVec<int> findIndicesOfBsTauTau(const ROOT::RVec<int>& isBsTauTau) {
     ROOT::RVec<int> indices;

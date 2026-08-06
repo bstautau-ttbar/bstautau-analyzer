@@ -68,45 +68,49 @@ preselection['mu']= ' & '.join([
 # -- TRIGGER --
 # Define trigger selections and exclusions for each data sample
 trigger_selections = {
-    'mu':{
-        'data_sm'   : 'HLT_IsoMu24',
+    '2018': {
+        'mu':{
+            'data_sm'   : 'HLT_IsoMu24',
+            },
+        # from https://cms.cern.ch/iCMS/analysisadmin/cadilines?id=2466&ancode=TOP-21-010&tp=an&line=TOP-21-010
+        'e':{
+            'data_eg'   : 'HLT_Ele32_WPTight_Gsf',
         },
-    # from https://cms.cern.ch/iCMS/analysisadmin/cadilines?id=2466&ancode=TOP-21-010&tp=an&line=TOP-21-010
-    'e':{
-        'data_eg'   : 'HLT_Ele32_WPTight_Gsf',
-    },
-    'mumu':{
-        'data_sm'   : 'HLT_IsoMu24',
-        'data_dm'   : 'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8',
-    },
-    'emu':{
-        'data_sm'   : 'HLT_IsoMu24',
-        'data_eg'   : 'HLT_Ele32_WPTight_Gsf',
-        'data_meg'  : 'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ | HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ | HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL'
-    },
-    'ee':{
-        'data_eg'   : 'HLT_Ele32_WPTight_Gsf | HLT_DoubleEle25_CaloIdL_MW | HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL',
+        'mumu':{
+            'data_sm'   : 'HLT_IsoMu24',
+            'data_dm'   : 'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8',
+        },
+        'emu':{
+            'data_sm'   : 'HLT_IsoMu24',
+            'data_eg'   : 'HLT_Ele32_WPTight_Gsf',
+            'data_meg'  : 'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ | HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ | HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL'
+        },
+        'ee':{
+            'data_eg'   : 'HLT_Ele32_WPTight_Gsf | HLT_DoubleEle25_CaloIdL_MW | HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL',
+        }
     }
 }
 
 trigger_exclusions = {
-    'mu':{
-        'data_sm'   : [], # nothing to be excluded here
+    '2018': {
+        'mu':{
+            'data_sm'   : [], # nothing to be excluded here
+            },
+        'e':{
+            'data_eg'   : [], # nothing to be excluded here
+            },
+        'emu':{
+            'data_sm'   : [], # nothing to be excluded here
+            'data_eg'   : ['HLT_IsoMu24'],  
+            'data_meg'  : ['HLT_IsoMu24','HLT_Ele32_WPTight_Gsf']  
         },
-    'e':{
-        'data_eg'   : [], # nothing to be excluded here
+        'mumu':{
+            'data_sm'   : [], # nothing to be excluded here
+            'data_dm'   : ['HLT_IsoMu24'], 
         },
-    'emu':{
-        'data_sm'   : [], # nothing to be excluded here
-        'data_eg'   : ['HLT_IsoMu24'],  
-        'data_meg'  : ['HLT_IsoMu24','HLT_Ele32_WPTight_Gsf']  
-    },
-    'mumu':{
-        'data_sm'   : [], # nothing to be excluded here
-        'data_dm'   : ['HLT_IsoMu24'], 
-    },
-    'ee':{
-        'data_eg'   : [], # nothing to be excluded here
+        'ee':{
+            'data_eg'   : [], # nothing to be excluded here
+        }
     }
 }
 

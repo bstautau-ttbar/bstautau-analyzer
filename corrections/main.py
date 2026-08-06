@@ -23,6 +23,7 @@ import utils
 def setup_multithreading(nevents):
     # Enable multithreading for performance (only if processing all events)
     # uproot
+    enabled = False
     if nevents is None:
         # ROOT
         utils.logger.print_info(f"[ROOT] Enabling ROOT multithreading with {NTHREADS} threads\n")
@@ -36,9 +37,13 @@ def setup_multithreading(nevents):
         opts = ROOT.RDF.RSnapshotOptions()
         opts.fCompressionLevel = 1  # faster write, slightly larger file
         opts.fCompressionAlgorithm = ROOT.ROOT.kLZ4  # LZ4 is much faster than default ZLIB
+
+        enabled = True
     else:
         utils.logger.print_info(f"Multithreading disabled because nevents is limited to {nevents}")
         utils.logger.print_info("ROOT multithreading doesn't work well with limited event processing")
+
+    return enabled
 
 def parse_arguments():
 
@@ -70,9 +75,13 @@ def parse_arguments():
                         action='store_true',
                         help=f'process only MC samples (no data).'
                         )
-    parser.add_argument("--test", "-t",
-                        action="store_true",
-                        help=f"run in test mode (process only a small subset of events).",
+    parser.add_argument('-N', '--Nevents',
+                        type=int, default=None,
+                        help='MAX number of events to process None: all events.'
+                        )
+    parser.add_argument('--test_samples',
+                        action='store_true', 
+                        help='Run only on signal and ttbar samples for quick testing'
                         )
     return parser.parse_args()
 
@@ -89,21 +98,21 @@ if __name__ == "__main__":
     
     channels   = args.channels
     year       = str(in_info.get('common', {}).get('year', 2018))
-    _testmode_ = args.test
+    _testmode_ = args.test_samples
     _mc_only_  = args.mc_only
-    nevents    = 1000 if _testmode_ else None
-    setup_multithreading(nevents)
+    nevents    = args.Nevents
+    _multit_     = setup_multithreading(nevents)
 
 
     #  get samples
     tree_dir_base = in_info.get('MC', {}).get('inpath_template', None)
     out_dir_base  = args.outdirectory if args.outdirectory else in_info.get('MC', {}).get('outpath_template', None)
-    tmp_outdir    = "/tmp" if not _testmode_ else "tmp_output" # temporary path for RDataFrame -> uproot
+    tmp_outdir    = "/tmp" if _multit_ else "tmp_output" # temporary path for RDataFrame -> uproot
 
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info(" TEST MODE ENABLED")
-    used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau'] # FIXME : temporary for testing
+        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau', 'bstautauext']
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
     
     samples = dict()
@@ -134,7 +143,16 @@ if __name__ == "__main__":
         # DATA
         if not (_mc_only_ or _testmode_):
             print(" ... loading DATA samples")
-            print("NOT IMPLEMENTED YET")
+            data_samples, _ = data.ioutils.load_data_samples(
+                tree_dir,
+                ch,
+                data.samples.data_samples_names,
+                year,
+                data.samples.files_names,
+                _tree_name,
+                nevents = nevents
+            )
+            samples[ch].update(data_samples)
         
         utils.logger.print_bold(f"\n>>> PROCESSING SAMPLES")
         # --> LOOP ON SAMPLES
@@ -142,48 +160,44 @@ if __name__ == "__main__":
             
             print(f"\n------ {name} ------")
             samples[ch][name] = samples[ch][name].Define("entry_idx", "rdfentry_")
-            _is_signal = 'bstautau' in name
+            _is_signal_ = 'bstautau' in name
+            _is_data_   = 'data' in name
         
-            # trigger selections (OR of the requirements in data)
-            hlt_conditions = data.selection.trigger_selections.get(ch, {})
-            hlt_paths      = [hlt_conditions.get(dset, "(1)") for dset in hlt_conditions] # FIXME: valid for MC only
-            hlt_sel        = ' | '.join(hlt_paths)
-            
+            # ---- SELECTIONS ----
+            # TRIGGER selections (MC : OR of the requirements in data)
+            hlt_accept     = data.selection.trigger_selections.get(year, {}).get(ch, {})
+            hlt_exclude    = data.selection.trigger_exclusions.get(year, {}).get(ch, {})
+            if _is_data_:
+                hlt_sel        = '&'.join([f'!({exl})' for exl in hlt_exclude[name]]) if hlt_exclude.get(name, []) else "(1)"
+                hlt_sel        = '&'.join([hlt_sel, hlt_accept[name]])
+            else:
+                hlt_sel        = ' | '.join([hlt_accept.get(dset, "(1)") for dset in hlt_accept])
             print(f" [SKIM] trigger selection: {hlt_sel}")
-            samples[ch][name] = samples[ch][name].Filter(hlt_sel)
+            samples[ch][name]  = samples[ch][name].Filter(hlt_sel)
 
-            # define invariant mass and transverse mass
-            samples[ch][name] = data.defutils.define_invariant_mass_and_mt(samples[ch][name], ch)
-            
-            # define jets passing minimal kinematics and b-tagging conditions
+            # PRESELECTION
             jet_sel = data.selection.min_jet_selection.get(ch, "(1)")
-            samples[ch][name] = data.defutils.define_jets_with_minimum_selection(
-                samples[ch][name], 
-                jet_sel
-            )
+            # invariant mass and transverse mass
+            samples[ch][name]  = data.defutils.define_invariant_mass_and_mt(samples[ch][name], ch)
+            # number of jet passing conditions 
+            print(f" [SKIM] jet selection: {jet_sel}")
+            samples[ch][name] = data.defutils.define_jets_passing_selection(samples[ch][name], ch, 'j', jet_sel) 
+            samples[ch][name] = data.defutils.define_jet_conditions(samples[ch][name], ch, jet_sel)
+            samples[ch][name] = data.defutils.define_btagging_conditions(samples[ch][name], ch)
             
-            #FIXME : check if anything missing for Bs signal
-            if _is_signal: 
-                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name])
-
-            samples[ch][name] = data.defutils.define_jets_with_minimum_selection_for_histos(
-                samples[ch][name], 
-                is_bstautau=_is_signal, 
-                bstautau_conditions=data.selection.bstautau_conditions
-            )
-            samples[ch][name] = data.defutils.define_jets_with_btagging_selection_for_filters(samples[ch][name])
-            samples[ch][name] = data.defutils.define_btagging_conditions(samples[ch][name], ch) # FIXME : saves conditions for all channels | external dep form btagging cond.
-            samples[ch][name] = data.defutils.define_jet_conditions(samples[ch][name], ch, jet_sel) # FIXME : saves conditions for all channels | external dep form jet cond.
-            
-            # preselections
             pre_sel = data.selection.preselection.get(ch, "(1)")
             print(f" [SKIM] preselection: {pre_sel}")
             samples[ch][name] = samples[ch][name].Filter(pre_sel)
 
-            # jet conditions
-            print(f" [SKIM] jet selection: {jet_sel}")
-            samples[ch][name] = samples[ch][name].Filter(f"ROOT::VecOps::Any({jet_sel})")
-
+            # ---- JET COLLECTIONS ----
+            # define jets passing minimal kinematics and b-tagging conditions
+            samples[ch][name], jet_masks = data.defutils.define_jet_mask(samples[ch][name], ch, 'j', jet_sel) 
+            for mask in jet_masks:
+                samples[ch][name] = data.defutils.define_jets_from_mask(samples[ch][name], 'j', mask)
+            
+            if _is_signal_: # prepare the jet-masks to match the jet and gen-level Bs
+                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name], 'j_sel_btagL_pt20', taudecays=True)
+            
 
             # --- save temporary snapshot
             utils.logger.print_info("[TMP] save temporary snapshot .....")
@@ -230,7 +244,7 @@ if __name__ == "__main__":
                     trgsf_branches = sf.sf_computation.compute_trigger_sf(chunk, ch, year)
 
                     # top pT re-weight in ttbar
-                    topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or _is_signal)
+                    topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or _is_signal_)
 
                     ## b-tag scale factors #FIXME: move to UParT b-tagging
                     #btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year, 
@@ -271,11 +285,12 @@ if __name__ == "__main__":
             utils.logger.print_success(f"[CHECK] {n_events_out} events consistent between {tmp_outpath} and {sfs_outpath}: no loss, no duplication")
 
             # --- merge SFs into the main tree and save final snapshot ---
-            outpath  = os.path.join(tmp_outdir if _testmode_ else out_dir,
+            outpath  = os.path.join(tmp_outdir if not _multit_ else out_dir,
                                     f"{data.samples.files_names[name]}.root")
 
             # Disable MT for the final merge
-            ROOT.DisableImplicitMT()
+            if _multit_:
+                ROOT.DisableImplicitMT()
 
             sf_file  = ROOT.TFile.Open(sfs_outpath)
             sf_tree  = sf_file.Get(_tree_name)
@@ -299,7 +314,7 @@ if __name__ == "__main__":
                 utils.logger.print_error(f"[ERROR] Failed to save final processed sample to {outpath}")
                 sys.exit(1)
             
-            if not _testmode_:
+            if _multit_:
                 ROOT.EnableImplicitMT(NTHREADS)  # restore for next sample
     
 

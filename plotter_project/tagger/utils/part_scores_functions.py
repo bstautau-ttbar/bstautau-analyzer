@@ -1,69 +1,77 @@
-def var(score): return f"btagged_loose_jets_pt_above_20_for_histo_{score}"
 
-def sum_expr(scores): return " + ".join([var(s) for s in scores])
+_score_base = 'part'
+
+def var(score, jet_branch): return f"{jet_branch}_{score}"
+
+def sum_expr(scores, jet_branch): return " + ".join([var(s, jet_branch) for s in scores])
 
 def define_combined_scores(
     samples,
+    jet_branch,
     tau_scores,
     parT_scores,
     bkg_scores,
     is_bstautau,
     bstautau_masks=None,
 ):
-
-    
-    sig_sum = sum_expr(tau_scores)
-    total_sum = sum_expr(parT_scores)
-    bkg_sum = sum_expr(bkg_scores)
+    sig_sum     = sum_expr(tau_scores, jet_branch)
+    total_sum   = sum_expr(parT_scores, jet_branch)
+    bkg_sum     = sum_expr(bkg_scores, jet_branch)
 
     # Define score sums
-    samples = samples.Define(f"btagged_loose_jets_pt_above_20_for_histo_part_sig_sum", sig_sum)
-    samples = samples.Define(f"btagged_loose_jets_pt_above_20_for_histo_part_total_sum", total_sum)
-    samples = samples.Define(f"btagged_loose_jets_pt_above_20_for_histo_part_bkg_sum", bkg_sum)
-
+    samples = samples.Define(f"{jet_branch}_{_score_base}_sig_sum",     sig_sum)
+    samples = samples.Define(f"{jet_branch}_{_score_base}_total_sum",   total_sum)
+    samples = samples.Define(f"{jet_branch}_{_score_base}_bkg_sum",     bkg_sum)
+    #print(f"Defined combined scores for {jet_branch}: sig_sum, total_sum, bkg_sum")
+    
     # Define all signals vs all bkgs
-    sig_frac_var = f"btagged_loose_jets_pt_above_20_for_histo_part_all_sig_frac"
-    samples = samples.Define(sig_frac_var, f"btagged_loose_jets_pt_above_20_for_histo_part_sig_sum / btagged_loose_jets_pt_above_20_for_histo_part_total_sum")
-
+    sig_frac_var = f"{jet_branch}_{_score_base}_all_sig_frac"
+    samples = samples.Define(sig_frac_var, f"{jet_branch}_{_score_base}_sig_sum/{jet_branch}_{_score_base}_total_sum")
+    #print(f"Defined combined score fraction: {sig_frac_var} = {jet_branch}_{_score_base}_sig_sum / {jet_branch}_{_score_base}_total_sum")
+    
     # Define per-tau fraction and masked histograms for bstautau
     for tau in tau_scores:
-        tau_var = var(tau)
-        frac_var = f"{tau_var}_frac"
-        frac_expr = f"{tau_var} / ({tau_var} + btagged_loose_jets_pt_above_20_for_histo_part_bkg_sum)"
-        samples = samples.Define(frac_var, frac_expr) # define just the fraction (no mask on bstautau)
+        #print(f"[define_combined_scores()] per-tau fraction for {tau} in {jet_branch}")
+        tau_var     = var(tau, jet_branch)
+        frac_var    = f"{tau_var}_frac"
+        
+        # fraction tauhx = tauhx / (tauhx + sum of all bkg scores)
+        frac_expr   = f"{tau_var}/({tau_var} + {jet_branch}_{_score_base}_bkg_sum)"
+        samples     = samples.Define(frac_var, frac_expr)
+        #print(f"[define_combined_scores()] {frac_var} = {tau_var} / ({tau_var} + {jet_branch}_{_score_base}_bkg_sum)")
 
         # Apply decay-mode-specific mask if bstautau and masks provided
         if is_bstautau:
-            decay_mode = tau.lower().replace("partraw", "")  # crude but works
-            mask = bstautau_masks.get(decay_mode)
-            expr_masked = f"{frac_var}[{mask}]" 
+            decay_mode   = tau.lower().replace("partraw", "")  # crude but works
+            mask         = bstautau_masks.get(decay_mode)
+            expr_masked  = f"{frac_var}[{mask}]" 
             expr_general = f"{frac_var}"  # General mask already used in the original branch definition
         else:
-            expr_masked = frac_var
+            expr_masked  = frac_var
             expr_general = frac_var
+        masked_var  = f"{frac_var}_masked" # decay-mode specific for bstautau
         
-        masked_var = f"{frac_var}_masked" # decay-mode specific for bstautau
-        samples = samples.Define(masked_var, expr_masked)
+        samples     = samples.Define(masked_var, expr_masked)
+        #print(f"[define_combined_scores()] {masked_var} = {expr_masked}")
         
-        
+        # FIXME defined twice
         general_var = f"{frac_var}_general" # general mask for bstautau (no decay mode diversification)
         samples = samples.Define(general_var, expr_general)
-        
-
-
+        #print(f"[define_combined_scores()] {general_var} = {expr_general}")
 
     # Signal over individual background scores
     for bkg in bkg_scores:
-        bkg_var = var(bkg)
-        ratio_var = f"btagged_loose_jets_pt_above_20_for_histo_part_sig_over_{bkg}"
-        expr = f"btagged_loose_jets_pt_above_20_for_histo_part_sig_sum / (btagged_loose_jets_pt_above_20_for_histo_part_sig_sum + {bkg_var})"
+        bkg_var = var(bkg, jet_branch)
+        ratio_var = f"{jet_branch}_{_score_base}_sig_over_{bkg}"
+        expr = f"{jet_branch}_{_score_base}_sig_sum / ({jet_branch}_{_score_base}_sig_sum + {bkg_var})"
         samples = samples.Define(ratio_var, expr)
-
+        #print(f"[define_combined_scores()] {ratio_var} = {expr}")
 
     return samples
 
 def define_max_scores(
     samples,
+    jet_branch,
     parT_scores,
     is_bstautau,
     bstautau_conditions=None
@@ -74,7 +82,7 @@ def define_max_scores(
     """
 
     # Create a combined matrix of all ParT scores for vectorized operations
-    score_vars = [var(score) for score in parT_scores]
+    score_vars = [var(score, jet_branch) for score in parT_scores]
     
     # Define which score is maximum for each jet
     samples = samples.Define("part_scores_matrix", f"ROOT::RVec<ROOT::RVec<double>>{{{', '.join(score_vars)}}}")
@@ -111,7 +119,7 @@ def define_max_scores(
 
         # Define the raw max score values for jets where this score is max
         raw_score_var = f"max_{score_name}_raw_score"
-        raw_expr = f"{var(score)}[{mask_var}]"
+        raw_expr = f"{var(score, jet_branch)}[{mask_var}]"
         
         # If the score is a signal, ratio = signal / (signal+sum of bkg); if bkg, ratio = bkg / (bkg+sum of signal)
         signal_scores = [s for s in parT_scores if "tauh" in s.lower()]
@@ -152,7 +160,7 @@ def define_max_scores(
 
 
 
-def apply_part_sequential_cuts_filter(samples, is_bstautau=False):
+def apply_part_sequential_cuts_filter(samples, jet_branch, is_bstautau=False):
     """Apply sequential cuts filter to create two sets of categories:
     
     1. EXCLUSIVE categories (refined cuts):
@@ -166,29 +174,29 @@ def apply_part_sequential_cuts_filter(samples, is_bstautau=False):
        - tauhtauh: tauhtaumu < 0.6
     """
     # Define cut conditions using GENERAL branches
-    cut_variable_mu = "btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general"
-    cut_variable_e = "btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general"
-    cut_threshold_mu = 0.6
-    cut_threshold_e = 0.4
+    cut_variable_mu     = f"{jet_branch}_ParTRawTauhtaumu_frac_general"
+    cut_variable_e      = f"{jet_branch}_ParTRawTauhtaue_frac_general"
+    cut_threshold_mu    = 0.6
+    cut_threshold_e     = 0.4
 
     # Define the cut conditions once
     cut_conditions = {
         'exclusive': {
-            'tauhtaumu': f"{cut_variable_mu} > {cut_threshold_mu}",
-            'tauhtaue': f"({cut_variable_mu} < {cut_threshold_mu}) && ({cut_variable_e} > {cut_threshold_e})",
-            'tauhtauh': f"({cut_variable_mu} < {cut_threshold_mu}) && ({cut_variable_e} < {cut_threshold_e})"
+            'tauhtaumu' : f"{cut_variable_mu} > {cut_threshold_mu}",
+            'tauhtaue'  : f"({cut_variable_mu} < {cut_threshold_mu}) && ({cut_variable_e} > {cut_threshold_e})",
+            'tauhtauh'  : f"({cut_variable_mu} < {cut_threshold_mu}) && ({cut_variable_e} < {cut_threshold_e})"
         },
         'onlytaumucut': {
-            'tauhtaumu': f"{cut_variable_mu} > {cut_threshold_mu}",
-            'tauhtaue': f"{cut_variable_mu} < {cut_threshold_mu}",
-            'tauhtauh': f"{cut_variable_mu} < {cut_threshold_mu}"
+            'tauhtaumu' : f"{cut_variable_mu} > {cut_threshold_mu}",
+            'tauhtaue'  : f"{cut_variable_mu} < {cut_threshold_mu}",
+            'tauhtauh'  : f"{cut_variable_mu} < {cut_threshold_mu}"
         }
     }
 
     branches_to_filter = [
-        'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaue_frac_general',
-        'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtauh_frac_general', 
-        'btagged_loose_jets_pt_above_20_for_histo_ParTRawTauhtaumu_frac_general'
+        f"{jet_branch}_ParTRawTauhtaue_frac_general",
+        f"{jet_branch}_ParTRawTauhtauh_frac_general", 
+        f"{jet_branch}_ParTRawTauhtaumu_frac_general"
     ]
 
     # Apply cuts to ParT score branches
@@ -210,7 +218,7 @@ def apply_part_sequential_cuts_filter(samples, is_bstautau=False):
             samples = samples.Define(filtered_branch, f"{branch_name}[{condition}]")
 
     # CRITICAL: Create hadronFlavour branches for EACH selection type and tau category
-    hadron_flavour_base = 'btagged_loose_jets_pt_above_20_for_histo_hadronFlavour'
+    hadron_flavour_base = f"{jet_branch}_hadronFlavour"
     
     for selection_type in ['exclusive', 'onlytaumucut']:
         for tau_type in ['tauhtaumu', 'tauhtaue', 'tauhtauh']:
@@ -227,7 +235,7 @@ def apply_part_sequential_cuts_filter(samples, is_bstautau=False):
 
 
     # Jet mass branch base name
-    jet_mass_base = "btagged_loose_jets_pt_above_20_for_histo_m"
+    jet_mass_base = f"{jet_branch}_m"
 
     # Define jet mass branches for each exclusive selection
     samples = samples.Define(f"{jet_mass_base}_exclusive_tauhtaumu", f"{jet_mass_base}[{cut_conditions['exclusive']['tauhtaumu']}]")

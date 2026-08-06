@@ -40,11 +40,13 @@ luminosity_year = { # in fb-1
         'relunc'    : 0.0084,
     },
 }
-years = list(luminosity_year.keys())
-eras = dict()
-[eras.update({year:list(luminosity_year[year].keys()).remove('total')}) for year in years]
-
 luminosity_year['Run2'] ={'total' : luminosity_year['2016']['total'] + luminosity_year['2017']['total'] + luminosity_year['2018']['total']}
+
+years = list(luminosity_year.keys())
+
+eras = dict()
+[eras.update({year: [k for k in luminosity_year[year].keys() if k not in ['total', 'relunc']]}) for year in years]
+
 
 # FXME : remove
 eras_2018 = ['A','B','C','D']
@@ -105,7 +107,7 @@ files_names['st_antit']     = 'ST_t_antitop'
 files_names['st_tw']        = 'ST_tW'
 files_names['st_antitw']    = 'ST_tW_antitop'
 files_names['bstautau']     = 'ttbarToBsToTauTau'
-files_names['bstautauext']  = 'ttbarToBsToTauTau-ext'
+files_names['bstautauext']  = 'ttbarToBsToTauTau_ext'
 
 # grouping by process
 samples_groups = {
@@ -214,11 +216,11 @@ titles['st_antitw'] = 'ST_tW_antitop'
 titles['bstautau'] = 'B_{s}#rightarrow#tau#tau'
 titles['bstautauext'] = 'B_{s}#rightarrow#tau#tau (ext)'
 # channels
-titles['emu'] = 'e#mu'
-titles['mumu'] = '#mu#mu'
-titles['ee'] = 'ee'
-titles['mu'] = '#mu'
-titles['e'] = 'e'
+titles['emu']   = 'e#mu'
+titles['mumu']  = '#mu#mu'
+titles['ee']    = 'ee'
+titles['mu']    = '#mu'
+titles['e']     = 'e'
 
 
 ## colours

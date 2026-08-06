@@ -18,6 +18,7 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning
 import utils
 import histo_toolkit as htools
 import data_toolkit as data
+import tagger.utils as tagger
 # ------------
 
 # FIXME : TO_DO
@@ -27,7 +28,7 @@ import data_toolkit as data
 # [x] include option to test a subset of (significant) histograms for quick testing
 # [ ] merge together similar samlpes and work on colors
 # [ ] organize into libraries
-# [ ] common data toolkit
+# [x] common data toolkit
 
 BATCH_SIZE  = int(1e4)
 NTHREADS    = multiprocessing.cpu_count()
@@ -160,7 +161,7 @@ if __name__ == '__main__':
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info("TEST MODE: only processing a subset of MC samples for quick testing")
-        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau']
+        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau', 'bstautauext']
     
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 
@@ -183,7 +184,7 @@ if __name__ == '__main__':
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
 
         samples[ch] = dict()
-        
+        # MC
         print("-- loading MC samples --")
         tree_dir = tree_dir_base.format(channel=ch)
         data.ioutils.checkpath(tree_dir, isdir=True, mustexist=True)
@@ -198,10 +199,18 @@ if __name__ == '__main__':
         )
         samples[ch].update(mc_samples)
         
-        # DATA - FIXME : implement
+        # DATA (to be checked)
         if not (mc_only or _testmode_):
             print(" ... loading DATA samples")
-            print("NOT IMPLEMENTED YET")
+            data.ioutils.load_data_samples(
+                tree_dir,
+                ch,
+                data.samples.data_samples_names,
+                year,
+                data.samples.files_names,
+                tree_name,
+                nevents = nevents,
+            )
         else :
             utils.logger.print_warning(" MC ONLY mode enabled, skipping data samples")
         
@@ -209,60 +218,75 @@ if __name__ == '__main__':
         utils.logger.print_bold(f"\n--> PROCESSING SAMPLES")
         # --> LOOP ON SAMPLES
         for name, rdf in samples[ch].items():
-            
+            print(f"\n------ {name} ------")
+            _is_bstautau_ = 'bstautau' in name
 
-            if 'bstautau' in name:
+            # event weight
+            if 'data' not in name:
+                weight_str = data.defutils.build_weight_string(name, sf=True, btag_sfs=False)
+                samples[ch][name] = samples[ch][name].Define('tot_weight', weight_str)
+            
+            # --- JET branches specfic fo histograms
+            jet_branch = 'j_sel_btagL_pt20'
+            if _is_bstautau_:
                 bstautau_conditions = {
-                    "general":      "SigJetMask",
-                    "tauhtauh":     "SigJetMaskTauhtauh",
-                    "tauhtaue":     "SigJetMaskTauhtaue",
-                    "tauhtaumu":    "SigJetMaskTauhtaumu"
+                    "general"   :     f"{jet_branch}_signalBs_mask",
+                    "tauhtauh"  :     f"{jet_branch}_signalBsTauhh_mask",
+                    "tauhtaue"  :     f"{jet_branch}_signalBsTauhe_mask",
+                    "tauhtaumu" :     f"{jet_branch}_signalBsTaumu_mask"
                 }
             else:
                 bstautau_conditions = None
 
-            # Define histogram-specific b-tagging branches AFTER filtering (won't be in snapshots)
-            samples[ch][name]     = data.defutils.define_jets_with_btagging_selection_for_histos(samples[ch][name], part_samples=part_samples, plot_all_jets=plot_all_jets)
-            ## define bstautau mask for different tau decay modes
-            if 'bstautau' in name:
-                samples[ch][name] = data.defutils.define_bstautau_taudecaymodes_mask(samples[ch][name])
+            #samples[ch][name]     =  data.defutils.define_jets_with_btagging_selection_for_histos(samples[ch][name], part_samples=part_samples, plot_all_jets=plot_all_jets)
+            # select jets for the analysis
+            samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], jet_branch, 
+                                                                        gen_matching_condition = bstautau_conditions['general'] if _is_bstautau_ else None, 
+                                                                        all_jets = plot_all_jets
+                                                                        )
             
-            # Define  total event-weight
-            if 'data' not in name: # FIXME implement
-                weight_str = data.defutils.build_weight_string(name, data.samples.files_names, sf=True, btag_sfs=False)
-                print(f"Applying weights to {name}: {weight_str}")
-                samples[ch][name] = samples[ch][name].Define('tot_weight', weight_str)
-
-            print(f" > Sample {name} has {samples[ch][name].Count().GetValue():.0f} events after filtering")
+            samples[ch][name] = tagger.part_scores_functions.define_combined_scores(samples[ch][name], 
+                                                                                    f'{jet_branch}_for_histo', 
+                                                                                    tau_scores, parT_scores, bkg_scores, 
+                                                                                    False, #'bstautau' in name, # FIXME: adjust mask
+                                                                                    bstautau_conditions
+                                                                                    )
             
-            if False:#part_samples: #using updated samples with part scores # FIXME tocheck
-                samples[ch][name] = define_combined_scores(samples[ch][name], tau_scores, parT_scores, bkg_scores, 'bstautau' in name, bstautau_conditions)
-                #FIXME : at some point I want the save step here save_samples_with_btagging_sfs(samples[ch][name], ch, name, info_samples.files_names, output_dir=output_dir)
+            # Apply  cuts filter and ONLY use those histograms
+            samples[ch][name] = tagger.part_scores_functions.apply_part_sequential_cuts_filter(samples[ch][name], 
+                                                                                               f'{jet_branch}_for_histo', 
+                                                                                               is_bstautau='bstautau' in name
+                                                                                               )
+            #histos[ch] = {}  # Clear regular histos
+            #histos[ch].update(histos_part_selections)  # Only add sequential cuts histos
                 
-                if plot_part_selections:
-                    # Apply  cuts filter and ONLY use those histograms
-                    samples[ch][name] = apply_part_sequential_cuts_filter(samples[ch][name], is_bstautau='bstautau' in name)
-                    histos[ch] = {}  # Clear regular histos
-                    histos[ch].update(histos_part_selections)  # Only add sequential cuts histos
-                    
-                    if flavor:
-                        histos_flavor[ch] = {}  # Clear regular flavor histos
-                        histos_flavor[ch].update(histos_part_selections)  # Only add sequential cuts histos for flavor
-                else:
-                    # Regular plotting - define all the usual histograms
-                    ## Define combined scores histograms
-                    histos[ch].update(histos_combined_scores)
-                    histos[ch].update(histos_jets_part)
-                    histos[ch].update(histos_interesting_jets_part)
+            if False:
+                histos_flavor[ch] = {}  # Clear regular flavor histos
+                histos_flavor[ch].update(histos_part_selections)  # Only add sequential cuts histos for flavor
+            # else:
+                # Regular plotting - define all the usual histograms
+                ## Define combined scores histograms
+                histos[ch].update(histos_combined_scores)
+                histos[ch].update(histos_jets_part)
+                histos[ch].update(histos_interesting_jets_part)
 
-                    if flavor:
-                        histos_flavor[ch].update(histos_interesting_jets_part)
-                        histos_flavor[ch].update(histos_combined_scores)
+                if flavor:
+                    histos_flavor[ch].update(histos_interesting_jets_part)
+                    histos_flavor[ch].update(histos_combined_scores)
 
-                    ## define MAX scores
-                    samples[ch][name] = define_max_scores(samples[ch][name], parT_scores, 'bstautau' in name, bstautau_conditions)
-                    histos[ch].update(histos_max_scores)
-                    #histos_flavor[ch].update(histos_max_scores) Not really easy to do because they are filtered in a weird way and I would need to define also hadronFlavor with the same filter
+                ## define MAX scores
+                samples[ch][name] = define_max_scores(samples[ch][name], parT_scores, 'bstautau' in name, bstautau_conditions)
+                histos[ch].update(histos_max_scores)
+                #histos_flavor[ch].update(histos_max_scores) Not really easy to do because they are filtered in a weird way and I would need to define also hadronFlavor with the same filter
+            
+            # Save a snapshot of few events for debugging
+            if _testmode_ and (nevents is not None):
+                os.makedirs(f"tmp_out/{ch}", exist_ok=True)
+                samples[ch][name].Snapshot(tree_name, f"tmp_out/{ch}/{name}_snapshot.root")
+                utils.logger.print_info(f" SAVED snapshot : tmp_out/{ch}/{name}_snapshot.root")
+        
+        
+        
         # -- end loop on samples
         if not make_histos: 
             utils.logger.print_warning("Dry-run mode enabled, skipping histogram creation and plotting")
