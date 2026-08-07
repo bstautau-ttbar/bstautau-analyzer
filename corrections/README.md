@@ -1,16 +1,21 @@
 # Preselection and MC correction for $Bs\to\tau\tau$
 
-## Main usage: apply $t\bar t$ preselection and SF corrections
+In this step we apply the **preselction** based on the $t \bar t$ phase space and 
+the jet selection to select the b-tagged jets that could be intereesting for the analysiss.
 
+## Main usage: apply $t\bar t$ preselection and SF corrections
+The basic way to run the code is 
 ```bash
-python main.py --input <inputs/data-info.yml> [--outdirectory <path>] [--channels <ch1> <ch2> ...] [--mc_only] [-N <int>] [--test_samples]
+python main.py --input <inputs/data-info.yml> [--channels <ch1> <ch2> ...] [--mc_only]
 ```
+
+The main options are:
 
 | Option | Short | Default | Description |
 |---|---|---|---|
 | `--input` | `-i` | required | `.yml` file with input ntuple locations and metadata from `inputs/` folder |
-| `--outdirectory` | `-o` | from `.yml` | Output directory for corrected ntuples (overrides `.yml` value) |
 | `--channels` | | `emu` | One or more decay channels to process. Supported channels: `mu`, `e`, `emu`, `mumu`, `ee` and space-separated list of any subset. |
+| `--outdirectory` | `-o` | from `.yml` | Output directory for corrected ntuples (overrides `.yml` value) |
 |`--mc_only`| | `False` | Skip data |
 |`--Nevents`| `-N` | `None` | MAX number of events to process. None: all events |
 | `--test_samples` | | `False` | Run on few samples : $t\bar t$ fullylep, semilep and $B_s\tau\tau$ signal. |
@@ -21,10 +26,14 @@ python main.py --input <inputs/data-info.yml> [--outdirectory <path>] [--channel
 python3 main.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --mc_only  --test_samples
 ``` 
 
+### Steps:
+
+
 
 ### Input configuration file
 
-The input `.yml` file specifies paths and common metadata:
+The input `.yml` file specifies paths and common metadata of the `custom nanoAOD` 
+carrying the inferred di-$\tau$ tagger score, per each jet:
 
 ```yaml
 MC:
@@ -39,7 +48,7 @@ common:
 ```
 
 `{channel}` is substituted at runtime with the channel being processed.
-See `inputs/datamc_TEMPLATE.yml` for a blank template and `inputs/datamc_2018-v0.yml` for a concrete example.
+See `inputs/datamc_TEMPLATE.yml` for a blank template and `inputs/datamc_2018_UParTedge-v0.yml` for a concrete example.
 
 <!---
 ## Processing pipeline
