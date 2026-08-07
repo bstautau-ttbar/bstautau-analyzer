@@ -74,12 +74,16 @@ def initialize_histograms(histos, samples, ch, norm_weight = 'tot_weight', sys_u
         Returns:
             dict: A dictionary containing the initialized histograms for each variable and sample. "xvar" : { "sample_name" : TH1D, ... }
     """
-    temp_hists = {}
-    # loop on the histogams
+    temp_hists   = {}
+    # loop on histograms templates
     for xvar, htmpl in histos[ch].items():
         temp_hists[xvar] = {}
+
+        # loop on samples
         for sname, vv in samples[ch].items():
+        
             branch_name = xvar
+            #print(f' {xvar} -- {sname}')
             temp_hists[xvar][f'{xvar}_{sname}'] = vv.Histo1D(htmpl[0], branch_name, norm_weight)
             
             # stat + systematic error
@@ -98,6 +102,32 @@ def initialize_histograms(histos, samples, ch, norm_weight = 'tot_weight', sys_u
             tmp_histUp.Clear()
             tmp_histDown.Clear()
     return temp_hists
+
+def merge_histograms(temp_hists):
+    
+    used_samples = []
+    new_temp_hists = dict()
+    for xvar, hdict in temp_hists.items():
+        new_temp_hists[xvar] = {}
+        for hname, hist in hdict.items():
+            if hname in used_samples: continue
+        
+            print(f' {xvar} -- {hname}')
+            tmp_hist = hist.GetValue().Clone()
+            print(f'  integral before merging: {tmp_hist.Integral()}')
+            # look for extension samples
+            for hnameext, histext in hdict.items():
+                if (hname in hnameext) and ('ext' in hnameext):
+                    print(f' {xvar} -- {hname} + {hnameext}')
+                    tmp_hist.Add(histext.GetValue())
+                    print(f'  + integral: {histext.GetValue().Integral()}')
+                    used_samples.append(hnameext)
+            
+            used_samples.append(hname)
+            print(f'  integral after merging: {tmp_hist.Integral()}')
+            new_temp_hists[xvar][hname] = tmp_hist
+    
+    return new_temp_hists
 
 
 def compute_ratio_plot(temp_hists, ratio, stats, ratio_pad):
@@ -152,25 +182,27 @@ def style_histograms(temp_hists, k, v, colours):
 
 def create_histogram_stacks(temp_hists, x, blinding):
     """Creates histogram stacks for the given channel, both data and MC."""
+    
     # FIXME group together same MC samples
     mc_ths     = ROOT.THStack('stack', '')
     data_ths   = ROOT.THStack('data_stack', '')
     
-    # loop on samples
+    # MC stack
     for key, ihist in temp_hists[x].items():
         if f'{x}_data' in key: continue
+        
         ihist.Draw('hist same')
         if "bstautau" not in key:
             mc_ths.Add(ihist.GetValue())
     mc_ths.SetMinimum(0.0001)
 
+    # DATA stack
     for key, ihist in temp_hists[x].items():
         if f'{x}_data' not in key:
             continue
         
         # CRITICAL: Clone the histogram for display only - don't modify the original
         display_hist = ihist.GetValue().Clone(f"{key}_display")
-        
         
         # Apply blinding ONLY to the display clone, not the original
         if should_apply_blinding(x) and blinding:
@@ -285,6 +317,7 @@ def save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix=""):
 
 
 def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles, main_pad, ratio_pad, c1, blinding, mconly=False):
+    
     # Create ROOT file for saving histograms with compression
     root_file_path = f'{basedir}/histograms.root'
     root_file = ROOT.TFile(root_file_path, 'UPDATE', "", ROOT.kLZMA)  # Use LZMA compression
@@ -293,11 +326,16 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
     
     # Create channel folder in ROOT file
     channel_folder = root_file.mkdir(ch)
+    
+    # merge histograms (WIP)
+    merged_temp_hists = merge_histograms(temp_hists)
+
+    # loop on histograms templates
     for i, (xvar, templ) in enumerate(histos[ch].items()):
         print(f" ({i+1}/{len(histos[ch])}) - {xvar}")
         c1.cd()
 
-        # create legend
+        # create legend with unique sample names (data, MC, signal)
         data_smpl           = get_data_sample_name(ch) if not mconly else None
         samples_for_legend  = get_samples_for_legend(samples, ch, data_smpl)
         leg                 = create_legend(temp_hists, samples_for_legend, titles)
@@ -306,6 +344,7 @@ def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles
         main_pad.cd()
         main_pad.SetLogy(False)
 
+        # style histograms
         style_histograms(temp_hists, xvar, templ, colours)
         
         # stack

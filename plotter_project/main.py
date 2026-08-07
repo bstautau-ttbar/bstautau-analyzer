@@ -26,9 +26,10 @@ import tagger.utils as tagger
 # [x] remove part that compute SF
 # [x] remove part with preselection
 # [x] include option to test a subset of (significant) histograms for quick testing
-# [ ] merge together similar samlpes and work on colors
-# [ ] organize into libraries
 # [x] common data toolkit
+# [ ] merge together similar samlpes and work on colors
+# [ ] organize into libraries (WIP)
+# [ ] implement the splitting by flavor rather than by samples 
 
 BATCH_SIZE  = int(1e4)
 NTHREADS    = multiprocessing.cpu_count()
@@ -260,7 +261,7 @@ if __name__ == '__main__':
             #histos[ch] = {}  # Clear regular histos
             #histos[ch].update(histos_part_selections)  # Only add sequential cuts histos
                 
-            if False:
+            if False: # FIXME: commented for the moment need to be reimplemented properly
                 histos_flavor[ch] = {}  # Clear regular flavor histos
                 histos_flavor[ch].update(histos_part_selections)  # Only add sequential cuts histos for flavor
             # else:
@@ -294,7 +295,7 @@ if __name__ == '__main__':
         utils.logger.print_bold(f"\n-- PLOTTING --")
         print(" > creating histogram definitions ...")
         
-        # Initialize all histogram definitions BEFORE processing (lazy setup)
+        # initialize all histogram definitions BEFORE processing (lazy setup)
         temp_hists = None
         temp_flavor_hists = None
         print(" > sample-based ")
@@ -308,6 +309,7 @@ if __name__ == '__main__':
             print(" > flavor-based ")
             temp_flavor_hists = htools.plotting_flavourbased_utils.initialize_flavor_histograms(hitsos_to_plot, samples, ch)
 
+        # actually process the histograms and produce the plots
         print(" > plotting histograms ...")
         c1, main_pad, ratio_pad = htools.plotting_utils.create_canvas_with_pads()
         htools.plotting_utils.process_histograms(
@@ -322,7 +324,7 @@ if __name__ == '__main__':
         )
 
         if flavor and temp_flavor_hists:
-            htools.plotting_flavourbased_utils.process_flavor_histograms(hitsos_to_plot, temp_flavor_hists, ch, out_dir, main_pad, ratio_pad, c1, info_samples.colours, blinddata)
+            htools.plotting_flavourbased_utils.process_flavor_histograms(hitsos_to_plot, temp_flavor_hists, ch, out_dir, main_pad, ratio_pad, c1, data.samples.colours, blinddata)
 
         print("-------- DONE --------")
     # end of channel loop

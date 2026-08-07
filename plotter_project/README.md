@@ -1,62 +1,39 @@
-# Plotter BsTauTau
+# Plotter for $Bs\to\tau\tau$
 
-## Setup environment
 
-```
-cmsrel CMSSW_13_0_10
-cd CMSSW_13_0_10/src/
-git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools # install nanoaodtools
-cd PhysicsTools/NanoAODTools
-cmsenv
-scram b
-cd ../../../../ 
-git clone --recursive git@github.com:friti/BsTauTau.git --branch bstautau
-cd BsTauTau/plotter_project/
+## Main usage: make plots after applying the SFs
+
+The basic usage is:
+```bash
+python3 main.py --input <inputs/data-wsf-info.yml> [--year <20XX>] [--channels <ch1> <ch2> ...] [--mc_only]
 ```
 
-## Arguments
-General arguments:
-- `make_histos`: if enabled it saves the final histograms as png, pdf, root and C files; with lin and log scale; and with the signal scaled to the stack or normalised as LHCb.
-- `channels`: choose which ttbar channels to process (sometimes it is useful for testing to just process the `emu` channel, since it is the fastest one). Example: `--channels 'emu','mumu'`
-- `flavor`: if enabled, it also creates flavor-based histograms (instead of only sample-based histograms). This is only for jet-based histograms, where the jets are split depending on their flavor rather than the physics process they come from.
-- `noblinding`: if enabled, it removes blinding from plots (to be improved)
-- `not_part_samples`: it disables all the parts of the framework where the parT score is used. This is useful if you want to run on ntuples without the saved new parT score.
-- `plot_all_jets`: As a default, in the jet-based plots [only the two jets](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/utils.py#L157-L175) with highest pT are included there (this is to reduce the QCD bkg). If this flag is enabled, it plots the jet-based histograms with all the b-tagged jets.
-- `plot_part_selections`: [Add to the final histograms](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/main.py#L248-L256) also [the ones](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/histos_part_selections.py) used for the final fit: 3 exclusive categories for each ttbar channel, found cutting the parT scores. Also the histogram where only the parT score of tauhtaumu is applied is saved + the histograms of the exclusive categories for the jet mass.
-- `save_filtered_data`: This was an attempt to load the full data sample, apply selection, and save a snapshot of data sample already skimmed. The reason is to speed up the processhistogram creation process. This is TO BE FIXED, it is not working properly yet :( 
-- `use_filtered_data`: once skimmed data sample is saved, it can be used using this flag. TO BE FIXED because it doesn't really work.
+Possible (main) argumets
+|Option| Description|
+|---|---|
+| `--input`               | `.yml` file with input ntuple locations and metadata from `inputs/` folder |
+| `--channels`            | One or more decay channels to process. Supported channels: `mu`, `e`, `emu`, `mumu`, `ee` and space-separated list of any subset. |
+| `--year`                | Year of CMS data-taking (only 2018 implemented for the moment) |
+| `--flavor`              | Split jets based on their flavor, rather than on the physics process. [TO BE IMPLEMENTED] |
+| `--noblinding`          | Disable blinding for data |
+| `--not_part_samples`    | Disable ParT scores handling, if you want to run on standard nanoAOD  |
+| `--plot_all_jets`       | Plot all b-tagged jets instead of just top 2 by pT [TO BE CHECKED]|
+| `--plot_part_selections`| Enable ParT sequential cuts plots (ParTRawTauhtaumu_frac > 0.6) [TO BE CHECKED]|
+| `--dryrun`              | Do not produce the output plots.|
+| `--mc_only`             | Skip data samples and run on MC only|
+| `-N`, `--Nevents`       | MAX number of events to process None: all events.|
+| `--test_samples`        | Run only on signal and ttbar samples for quick testing|
+| `--test_histos`         | Run only on a subset of histograms for quick testing|
 
-The framework also computes and applies object and trigger scale factors. Since computing them takes a long time, once they are cmputed, a snapshot of the samples is saved with new branches including the SFs, and depending on the used flag you can either compute scale factors or use samples with already computed scale factors.
+**Example:** produce a set of plot for a test-production of nanoAODv15 samples
+```bash
+python3 main.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu ee mumu mu e --mc_only  --test_samples
+```
 
-Scale Factors arguments:
-- `compute_sfs`: [It computes the SFs](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L130-L137) and saves snapshots of the samples with additional branches with the new SFs. This includes reco, ID and isolation [objects](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L10) SFs; [trigger SFs](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L60); [top pT reweighting](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L96).
-- `compute_btag_sfs`: It loads samples where the other SFs are already computed (using the flag --compute_sfs), it [computes the b-tagging SFs](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L159-L199) and [saves snapshots](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/sf_computation.py#L246) of the samples with additional branches with the new computed SFs.
-- `use_ntuples_with_sfs`: This flag must be used if you want to use samples where the object and trigger SFs are saved. In this case these SFs are also applied.
-- `use_ntuples_with_btag_sfs`: This flag must be used if you want to use samples where the b-tagging SFs (+ all the others) are saved. In this case all the SFs are applied.
-
-## Sequence to compute SFs:
-
-`python3 main.py --channels 'emu','mumu','ee','e','mu' --compute_sfs`
-
-`python3 main.py --channels 'emu','mumu','ee','e','mu' --compute_btag_sfs --use_ntuples_with_sfs`
-
-`python3 main.py --channels 'emu','mumu','ee','e','mu' --use_ntuples_with_btag_sfs --make_histos` --> final plots with all the corrections
-
-
-## Examples to run
-
-Simplest command to make plots:
-`python3 main.py --make_histos --channels 'emu'`
-
-Final command to plot everything with all the right corrections:
-`python3 main.py --make_histos --channels 'emu','mumu','ee','e','mu' --use_ntuples_with_btag_sfs --plot_part_selections `
-
-## Documentation on the code
-
-### Some general info:
+## Documentation
+<!--
+### Data handling
 - [Available 2018 flat samples (without and with SFs)](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/main.py#L125-L127)
-- [samples.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/samples.py)
-  - it also includes samples cross sections
 - [selection.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/selection.py)
   - Selections for each ttbar channel + trigger selection
 - All the histograms with their features are saved in [histos_baseline.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/histos_baseline.py)
@@ -96,6 +73,7 @@ Final command to plot everything with all the right corrections:
 
   - If parT scores are includes in the samples, [part_scores_function.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/part_scores_functions.py):
     - The 3 parT scores that are output of the tagger can be [combined in various ways](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/part_scores_functions.py#L5) that can be interesting to plot. For example a single signal/bkg score, or splitting the 3 signal scores vs the total bkg etc. These are interesting to look at and they are computed and [histos](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/histos_part.py) are saved.
-    - Exclusive categories computed applying [subsequential parT scores cuts](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/part_scores_functions.py#L153) --> these are the final categories used for the fit! *btagged_loose_jets_pt_above_20_for_histo_m_exclusive_tauhtau{taus_decay_channel}*
+    - Exclusive categories computed applying [subsequential parT scores cuts](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/part_scores_functions.py#L153) -> these are the final categories used for the fit! *btagged_loose_jets_pt_above_20_for_histo_m_exclusive_tauhtau{taus_decay_channel}*
   - Create histograms with [plotting_utils.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/plotting_utils.py) and [plotting_flavourbased_utils.py](https://github.com/friti/BsTauTau/blob/bstautau/plotter_project/plotting_flavourbased_utils.py)
-  
+
+-->
