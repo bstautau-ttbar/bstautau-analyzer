@@ -162,7 +162,7 @@ if __name__ == '__main__':
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info("TEST MODE: only processing a subset of MC samples for quick testing")
-        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'bstautau', 'bstautauext']
+        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
     
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 

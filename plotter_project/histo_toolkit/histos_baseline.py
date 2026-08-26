@@ -188,6 +188,8 @@ histos_test = {
         'e1_pt'  : (ROOT.RDF.TH1DModel('e1_pt', '', 20, 0, 200), 'electron p_{T} (GeV)', 1),
         'mu1_pt' : (ROOT.RDF.TH1DModel('mu1_pt', '', 20, 0, 200), 'muon p_{T} (GeV)', 1),
         'inv_mass' : (ROOT.RDF.TH1DModel('inv_mass', '', 50, 10, 200), 'inv mass', 1),
+        'j_sel_btagL_pt20_for_histo_m'                             : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_m', '', 20, 0, 20), 'reco jet mass', 1),
+        'j_sel_btagL_pt20_for_histo_ParTRegMass'                   : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRegMass', '', 20, 0, 20), 'UParT jet mass', 1),
         'j_sel_btagL_pt20_for_histo_part_all_sig_frac'             : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_part_all_sig_frac', '', 40, 0, 1), 'sig frac', 1),
         'j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtaue_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{e} frac (general)', 1),
         'j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general'  : (ROOT.RDF.TH1DModel('j_sel_btagL_pt20_for_histo_ParTRawTauhtauh_frac_general', '', 40, 0, 1), 'ParT #tau_{h}#tau_{h} frac (general)', 1),

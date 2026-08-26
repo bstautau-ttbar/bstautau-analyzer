@@ -1,0 +1,11 @@
+MC :
+  inpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/"
+  inpath_template_wsfs: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/sfs_applied"
+  plotter_histos: None
+data:
+  inpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/"
+common:
+  year: 2018
+  treename : Events
+  outpath_template: "./plots/testTagMregV0_{year}_{label}"
+  

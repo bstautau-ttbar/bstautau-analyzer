@@ -17,7 +17,8 @@ jet_attributes_part = [
     "ParTRawSingletau",
     "ParTRawTauhtaue", 
     "ParTRawTauhtauh", 
-    "ParTRawTauhtaumu"
+    "ParTRawTauhtaumu",
+    "ParTRegMass"
 ]
 
 jet_conditions = {
