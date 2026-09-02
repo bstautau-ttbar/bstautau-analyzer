@@ -94,13 +94,14 @@ def define_jet_mask(sample, channel, jet_branch, jet_base_selection, btagging_ma
 
     return sample, masks
 
-def define_jets_from_mask(sample, jet_branch, mask_name, part_samples = True, save_njets = False):
+def define_jets_from_mask(sample, jet_branch, mask_name, part_samples = True, add_branches = [], save_njets = False):
     """
         Define a new jet collection based on a mask
         The mask should be <new-name>_mask ant the new collection will be <new-name>
     """
     jet_attributes = jet_attributes_global
     if part_samples: jet_attributes = jet_attributes + jet_attributes_part
+    jet_attributes.extend(add_branches)
 
     new_name = mask_name.strip('_mask')
     print(f" [+] jet collection from {mask_name} -> {new_name}")
@@ -112,7 +113,7 @@ def define_jets_from_mask(sample, jet_branch, mask_name, part_samples = True, sa
 
     return sample 
 
-def define_jets_for_analysis(sample, jet_branch, gen_matching_condition=None, all_jets=False):
+def define_jets_for_analysis(sample, jet_branch, gen_matching_condition=None, add_branches=[], all_jets=False):
     """ Select jets entering the analysis and to be plot in histograms."""
 
     jet_attributes = jet_attributes_global + jet_attributes_part    
@@ -126,7 +127,7 @@ def define_jets_for_analysis(sample, jet_branch, gen_matching_condition=None, al
             sample = sample.Define(f"{jet_branch}_for_histo_mask", f"get_topNbyVarSel_mask({jet_branch}_pt, {gen_matching_condition}, 2)")
         else:
             sample = sample.Define(f"{jet_branch}_for_histo_mask", f"get_topNbyVar_mask({jet_branch}_pt, 2)")
-        sample = define_jets_from_mask(sample, jet_branch, f"{jet_branch}_for_histo_mask", part_samples=True, save_njets=True)
+        sample = define_jets_from_mask(sample, jet_branch, f"{jet_branch}_for_histo_mask", part_samples=True, add_branches=add_branches, save_njets=True)
 
         #sample = sample.Define(f"{jet_branch}_for_histo_mask", f"get_topNbyVar_mask({jet_branch}_pt, 2)")
         #sample = define_jets_from_mask(sample, jet_branch, f"{jet_branch}_for_histo_mask", part_samples=True, save_njets=True)    

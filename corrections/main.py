@@ -75,13 +75,13 @@ def parse_arguments():
                         action='store_true',
                         help=f'process only MC samples (no data).'
                         )
-    parser.add_argument('-N', '--Nevents',
-                        type=int, default=None,
-                        help='MAX number of events to process None: all events.'
-                        )
     parser.add_argument('--test_samples',
                         action='store_true', 
                         help='Run only on signal and ttbar samples for quick testing'
+                        )
+    parser.add_argument('-N', '--Nevents',
+                        type=int, default=None,
+                        help='MAX number of events to process None: all events.'
                         )
     return parser.parse_args()
 
@@ -117,6 +117,7 @@ if __name__ == "__main__":
     
     samples = dict()
     _tree_name = in_info.get('common', {}).get('treename', 'Events')
+    
 
     # --> LOOP ON CHANNELS
     for ch in channels:
@@ -195,8 +196,23 @@ if __name__ == "__main__":
             for mask in jet_masks:
                 samples[ch][name] = data.defutils.define_jets_from_mask(samples[ch][name], 'j', mask)
             
-            if _is_signal_: # prepare the jet-masks to match the jet and gen-level Bs
-                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name], 'j_sel_btagL_pt20', taudecays=True)
+            analysis_jet_branch = 'j_sel_btagL_pt20' 
+            # jet-mask for Bs-jet gen matching (only for signal)
+            if _is_signal_: 
+                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name], analysis_jet_branch, taudecays=True)
+            bstautau_conditions = {
+                "general"   :     f"{analysis_jet_branch}_signalBs_mask",
+                "tauhtauh"  :     f"{analysis_jet_branch}_signalBsTauhh_mask",
+                "tauhtaue"  :     f"{analysis_jet_branch}_signalBsTauhe_mask",
+                "tauhtaumu" :     f"{analysis_jet_branch}_signalBsTauhmu_mask"
+            }
+            
+            # select jets for analysis (e.g. 2 leading jets passing b-tagging WP)
+            samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], analysis_jet_branch, 
+                                                                        gen_matching_condition = None, #FIXME : add gen-matching for  signal 
+                                                                        add_branches = ['signalBs_mask', 'signalBsTauhh_mask', 'signalBsTauhe_mask', 'signalBsTauhmu_mask'] if _is_signal_ else [],
+                                                                        all_jets = False, # True to keep all jets passing
+                                                                        )
             
 
             # --- save temporary snapshot

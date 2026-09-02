@@ -140,7 +140,6 @@ if __name__ == '__main__':
     else : utils.logger.print_error(f"Input file {args.input} does not exist. EXIT"); sys.exit(1)
 
     channels             = args.channels
-    #channels             = channels[0].split(',')
     year                 = args.year
     flavor               = args.flavor
     make_histos          = not args.dryrun
@@ -173,13 +172,14 @@ if __name__ == '__main__':
         "test" if _testmode_ else None,
         datetime.now().strftime('%d%b%Y_%Hh%Mm%Ss')
         ]))
-    out_dir         = out_dir_base.format(year=year, label=label)
+    out_dir        = out_dir_base.format(year=year, label=label)
     hitsos_to_plot = htools.histos_baseline.histos_test if test_histos else htools.histos_baseline.histos
     if make_histos:
         htools.io.make_directories_for_plots(out_dir, channels, flavor_based=flavor)
 
     samples   = dict()
     tree_name = in_info.get('common', {}).get('treename', 'Events')
+    
     # --> LOOP ON CHANNELS
     for ch in channels:
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
@@ -202,7 +202,7 @@ if __name__ == '__main__':
         
         # DATA (to be checked)
         if not (mc_only or _testmode_):
-            print(" ... loading DATA samples")
+            print("-- loading DATA samples --")
             data.ioutils.load_data_samples(
                 tree_dir,
                 ch,
@@ -216,7 +216,7 @@ if __name__ == '__main__':
             utils.logger.print_warning(" MC ONLY mode enabled, skipping data samples")
         
 
-        utils.logger.print_bold(f"\n--> PROCESSING SAMPLES")
+        utils.logger.print_bold(f"\n ... PROCESSING SAMPLES ...")
         # --> LOOP ON SAMPLES
         for name, rdf in samples[ch].items():
             print(f"\n------ {name} ------")
