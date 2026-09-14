@@ -1,0 +1,23 @@
+{
+    "infiles": [
+        "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/efficiency_Bs-chsAk4_nanoAODv9.root",
+        "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/efficiency_Bs-puppiAk4_nanoAODv15.root"
+    ],
+    "labels": [
+        "chsAK4",
+        "puppiAK4"
+    ],
+    "outdir": "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/nanoAODv9-v15/",
+    "ref" : "h_good_j",
+    "extraText": [
+        "Bs#rightarrow#tau_{h}#tau_{x}, #DeltaR(B_{s}, jet)<0.4"
+    ],
+    "compare": [
+        [["h_matched_j", ""],
+        ["h_matched_j", ""]],
+        [["h_matched_j_btagDeepL", "btagDeepFlavB L"],
+        ["h_matched_j_btagDeepL", "btagDeepFlavB L"]],   
+        [["h_matched_j_btagDeepL", "btagDeepFlavB L"],
+        ["h_matched_j_btagUParTL", "btagUParT L"]]
+    ]
+}

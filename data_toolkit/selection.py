@@ -138,9 +138,15 @@ bstautau_conditions = {
 
 # --- BTAG working point ---
 btag_algo   = 'deepflavB'
-btag_wpval  = { #FIXME :check - https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv15/
+btag_wpval  = { #FIXME :check - https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv9/#ak4-b-tagging 
     'L' : 0.0499,
     'M' : 0.2770,
+    'T' : 0.7100
+}
+btagUParT_wpval = { # https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv15/ 
+    'L' : 0.0308,
+    'M' : 0.1610,
+    'T' : 0.5405
 }
 btag_chwp   = {
     'emu'   : ('L',btag_wpval['L']),
