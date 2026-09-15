@@ -25,10 +25,10 @@ object_sfs ={
         },
         'btag' : {
             'file'    : '/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/latest/btagging.json.gz',
-            'bc'      : 'UParTAK4_**',
+            'bc'      : 'UParTAK4_comb',
             'light'   : 'UParTAK4_light',
-            'eff'     : './sf_toolkit/sf_maps/0520A050-AF68-EF43-AA5B-5AA77C74ED73_out.root',
-            'effname' : 'h2_{workingpoint}Eff_{jetflavor}'
+            'eff'     : './sf_toolkit/sf_maps/btag_efficiency/{channel}_2018/btag-upartB_efficiency.root',
+            'effname' : 'effj_btag{workingpoint}_{jetflavor}_tt_fullylep',
         },
     }
 }

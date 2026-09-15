@@ -195,13 +195,13 @@ def merge_btag_sfs(flav, bc_sfs, l_sfs):
 
     return ak.unflatten(sf, n)                        # re-jag to flav's layout
 
-def load_eff2Dhisto(cfg, wp = "L"):
+def load_eff2Dhisto(channel, cfg, wp = "L"):
  
-    histfile        =  cfg.get('eff', None)
+    histfile_tmpl   =  cfg.get('eff', None)
     histname_tmpl   =  cfg.get('effname', None)
-    eff_hist_b  =  load_histo(histfile, histname_tmpl.format(workingpoint=wp, jetflavor='b'))
-    eff_hist_c  =  load_histo(histfile, histname_tmpl.format(workingpoint=wp, jetflavor='c'))
-    eff_hist_l  =  load_histo(histfile, histname_tmpl.format(workingpoint=wp, jetflavor='udsg'))
+    eff_hist_b  =  load_histo(histfile_tmpl.format(channel=channel), histname_tmpl.format(workingpoint=wp, jetflavor='b'))
+    eff_hist_c  =  load_histo(histfile_tmpl.format(channel=channel), histname_tmpl.format(workingpoint=wp, jetflavor='c'))
+    eff_hist_l  =  load_histo(histfile_tmpl.format(channel=channel), histname_tmpl.format(workingpoint=wp, jetflavor='udsg'))
     
     if (not eff_hist_b) or (not eff_hist_c) or (not eff_hist_l) :
         print(f"ERROR: b-tag efficiency histos for {wp} working point NOT FOUND.")
@@ -209,13 +209,13 @@ def load_eff2Dhisto(cfg, wp = "L"):
     
     return eff_hist_b, eff_hist_c, eff_hist_l
 
-def eval_btag_efficiency(f_flav, f_eta, f_pt, wp, cfg):
+def eval_btag_efficiency(f_flav, f_eta, f_pt, channel, wp, cfg):
     """
     b-tagging efficiency from histogram based on flat input
     """
 
     # get efficiency histograms by flavor
-    heff_b, heff_c, heff_light = load_eff2Dhisto(cfg, wp)
+    heff_b, heff_c, heff_light = load_eff2Dhisto(channel,cfg, wp)
     if (not heff_b) or (not heff_c) or (not heff_light) :
         print(f"ERROR: b-tag efficiency histos for {wp} working point NOT IMPORTED.")
         return False
@@ -235,7 +235,7 @@ def eval_btag_efficiency(f_flav, f_eta, f_pt, wp, cfg):
 
     return np.minimum(eff, 1.-1e-6)
 
-def eval_event_btag(discr, wp, wp_val, bc_sfs, l_sfs, flav, eta, pt, cfg, debug =False):
+def eval_event_btag(discr, wp, wp_val, channel, bc_sfs, l_sfs, flav, eta, pt, cfg, debug =False):
     """
     Per-event btag scale factor according to BTV recomendation
     https://btv-wiki.docs.cern.ch/PerformanceCalibration/fixedWPSFRecommendations/
@@ -252,10 +252,9 @@ def eval_event_btag(discr, wp, wp_val, bc_sfs, l_sfs, flav, eta, pt, cfg, debug 
     tag_flat  = ak.to_numpy(ak.flatten(discr > wp_val))
 
     # load btag efficiency
-
     eff = eval_btag_efficiency(
         ak.to_numpy(ak.flatten(flav)), ak.to_numpy(ak.flatten(eta)), ak.to_numpy(ak.flatten(pt)),
-        wp, cfg
+        channel, wp, cfg
     )
     
     #1e-1*np.ones_like(sf_flat) #FIXME: placeholder

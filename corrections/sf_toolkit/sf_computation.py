@@ -176,13 +176,13 @@ def compute_btag_sf(events, channel, year, jetbranch = "selected_jets_for_histo"
     jet_pt      = events[jetbranch+'_pt']
     jet_eta     = events[jetbranch+'_eta']
     jet_flav    = events[jetbranch+'_hadronFlavour']
-    jet_discr   = events[jetbranch+'_deepflavB']
+    jet_discr   = events[jetbranch+'_upartB']
     
     #  retrive SF .json
     cfg_btag            = sf_inputs.object_sfs[year].get('btag', {})
     cset_btag           = correctionlib.CorrectionSet.from_file(cfg_btag.get('file', None))
-    cset_btag_mujets    = cset_btag['bc']
-    cset_btag_incl      = cset_btag['light']
+    cset_btag_mujets    = cset_btag[cfg_btag.get('bc', None)]
+    cset_btag_incl      = cset_btag[cfg_btag.get('light', None)]
 
     # split by true flavor
     is_bcj      = (jet_flav != 0)
@@ -195,7 +195,8 @@ def compute_btag_sf(events, channel, year, jetbranch = "selected_jets_for_histo"
     
     # merge into event-weight
     new_branches['btag_sf'] = sf_utils.eval_event_btag( # nominal
-            jet_discr, wp, wp_val, 
+            jet_discr, wp, wp_val,
+            channel,
             bcj_sfs['btag_sf_bcjets'], lightj_sfs['btag_sf_ljets'],
             jet_flav, jet_eta, jet_pt,
             cfg_btag
@@ -204,12 +205,14 @@ def compute_btag_sf(events, channel, year, jetbranch = "selected_jets_for_histo"
        if sys_suffix == "" : continue
        new_branches['btag_sf_bc'+sys_suffix] = sf_utils.eval_event_btag( # bc SF variations
             jet_discr, wp, wp_val, 
+            channel,
             bcj_sfs['btag_sf_bcjets'+sys_suffix], lightj_sfs['btag_sf_ljets'],
             jet_flav, jet_eta, jet_pt,
             cfg_btag
         )
        new_branches['btag_sf_l'+sys_suffix] = sf_utils.eval_event_btag( # light SF variations
             jet_discr, wp, wp_val, 
+            channel,
             bcj_sfs['btag_sf_bcjets'], lightj_sfs['btag_sf_ljets'+sys_suffix],
             jet_flav, jet_eta, jet_pt,
             cfg_btag

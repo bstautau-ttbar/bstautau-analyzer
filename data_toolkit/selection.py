@@ -137,21 +137,35 @@ bstautau_conditions = {
 }
 
 # --- BTAG working point ---
-btag_algo   = 'deepflavB'
-btag_wpval  = { #FIXME :check - https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv9/#ak4-b-tagging 
-    'L' : 0.0499,
-    'M' : 0.2770,
-    'T' : 0.7100
+btag_algo   = 'upartB'#'deepflavB'
+btag_wpval  = { 
+    'deepflavB' : {# https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv9/#ak4-b-tagging 
+        '2018' : {
+            'L' : 0.0499,
+            'M' : 0.2770,
+            'T' : 0.7100
+        }
+    },
+    'upartB' : { # https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv15/ 
+        '2018' : {
+            'L' : 0.0308,
+            'M' : 0.1610,
+            'T' : 0.5405
+        }
+    }
+    
 }
-btagUParT_wpval = { # https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv15/ 
+btagUParT_wpval = { 
     'L' : 0.0308,
     'M' : 0.1610,
     'T' : 0.5405
 }
 btag_chwp   = {
-    'emu'   : ('L',btag_wpval['L']),
-    'ee'    : ('L',btag_wpval['L']),
-    'mmu'   : ('L',btag_wpval['L']),
-    'e'     : ('L',btag_wpval['L']),
-    'mu'    : ('M',btag_wpval['M']),
+    '2018' : {
+        'emu'   : ('L',btag_wpval[btag_algo]['2018']['L']),
+        'ee'    : ('L',btag_wpval[btag_algo]['2018']['L']),
+        'mmu'   : ('L',btag_wpval[btag_algo]['2018']['L']),
+        'e'     : ('L',btag_wpval[btag_algo]['2018']['L']),
+        'mu'    : ('M',btag_wpval[btag_algo]['2018']['M']),
+    }
 }

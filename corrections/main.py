@@ -101,7 +101,7 @@ if __name__ == "__main__":
     _testmode_ = args.test_samples
     _mc_only_  = args.mc_only
     nevents    = args.Nevents
-    _multit_     = setup_multithreading(nevents)
+    _multit_   = setup_multithreading(nevents)
 
 
     #  get samples
@@ -117,8 +117,11 @@ if __name__ == "__main__":
     
     samples = dict()
     _tree_name = in_info.get('common', {}).get('treename', 'Events')
-    
 
+    # INFO
+    utils.logger.print_info(f" > B-Tagging algorithm: {data.selection.btag_algo}")
+    utils.logger.print_info(f" > B-Tagging working points ({year}): {data.selection.btag_wpval[data.selection.btag_algo][year]}")
+    print("--"*20+"\n")
     # --> LOOP ON CHANNELS
     for ch in channels:
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
@@ -182,7 +185,7 @@ if __name__ == "__main__":
             samples[ch][name]  = data.defutils.define_invariant_mass_and_mt(samples[ch][name], ch)
             # number of jet passing conditions 
             print(f" [SKIM] jet selection: {jet_sel}")
-            samples[ch][name] = data.defutils.define_jets_passing_selection(samples[ch][name], ch, 'j', jet_sel) 
+            samples[ch][name] = data.defutils.define_jets_passing_selection(samples[ch][name], year, 'j', jet_sel) 
             samples[ch][name] = data.defutils.define_jet_conditions(samples[ch][name], ch, jet_sel)
             samples[ch][name] = data.defutils.define_btagging_conditions(samples[ch][name], ch)
             
@@ -192,14 +195,14 @@ if __name__ == "__main__":
 
             # ---- JET COLLECTIONS ----
             # define jets passing minimal kinematics and b-tagging conditions
-            samples[ch][name], jet_masks = data.defutils.define_jet_mask(samples[ch][name], ch, 'j', jet_sel) 
+            samples[ch][name], jet_masks = data.defutils.define_jet_mask(samples[ch][name], year, 'j', jet_sel) 
             for mask in jet_masks:
                 samples[ch][name] = data.defutils.define_jets_from_mask(samples[ch][name], 'j', mask)
             
             analysis_jet_branch = 'j_sel_btagL_pt20' 
             # jet-mask for Bs-jet gen matching (only for signal)
             if _is_signal_: 
-                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name], analysis_jet_branch, taudecays=True)
+                samples[ch][name] = data.defutils.define_bstautau_mask(samples[ch][name], year, analysis_jet_branch, taudecays=True)
             bstautau_conditions = {
                 "general"   :     f"{analysis_jet_branch}_signalBs_mask",
                 "tauhtauh"  :     f"{analysis_jet_branch}_signalBsTauhh_mask",
@@ -262,18 +265,18 @@ if __name__ == "__main__":
                     # top pT re-weight in ttbar
                     topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or _is_signal_)
 
-                    ## b-tag scale factors #FIXME: move to UParT b-tagging
-                    #btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year, 
-                    #                                                    jetbranch   = "selected_jets_for_histo", 
-                    #                                                    wp          = data.selection.btag_chwp[ch][0],
-                    #                                                    wp_val      = data.selection.btag_chwp[ch][1]
-                    #                                                    )
+                    ## b-tag scale factors
+                    btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year,
+                                                                        jetbranch   = "j_sel",
+                                                                        wp          = data.selection.btag_chwp[year][ch][0],
+                                                                        wp_val      = data.selection.btag_chwp[year][ch][1]
+                                                                        )
                     out_chunk = {
                         "entry_idx": chunk["entry_idx"], # keep entry-by-entry alignement
                         **objsf_branches, 
                         **trgsf_branches, 
                         **topsf_branches, 
-                        #**btagsf_branches,
+                        **btagsf_branches,
                     }
 
                     n_events_out += len(chunk)
