@@ -4,20 +4,19 @@
         "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/efficiency_Bs-puppiAk4_nanoAODv15.root"
     ],
     "labels": [
-        "chsAK4",
-        "puppiAK4"
+        "ak4CHS",
+        "ak4PUPPI"
     ],
     "outdir": "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/nanoAODv9-v15/",
-    "ref" : "h_good_j",
+    "ref" : "h_all_Bs",
     "extraText": [
-        "Bs#rightarrow#tau_{h}#tau_{x}, #DeltaR(B_{s}, jet)<0.4"
+        "Bs#rightarrow#tau_{h}#tau_{x}", 
+        "|#eta_{j}| < 2.5 #DeltaR(B_{s},j)<0.4"
     ],
-    "compare": [
-        [["h_matched_j", ""],
-        ["h_matched_j", ""]],
-        [["h_matched_j_btagDeepL", "btagDeepFlavB L"],
-        ["h_matched_j_btagDeepL", "btagDeepFlavB L"]],   
-        [["h_matched_j_btagDeepL", "btagDeepFlavB L"],
-        ["h_matched_j_btagUParTL", "btagUParT L"]]
-    ]
+    "compare": {
+        "matched_CHSvsPUPPI" : [["h_matched_Bs", "p^{j}_{T}>10 GeV", 0], ["h_matched_Bs", "p^{j}_{T}>10 GeV", 1]],
+        "DeepJvsUParT-L"     : [["h_matched_Bs_btagDeepL", "btag DeepJet L", 0],["h_matched_Bs_btagDeepL", "btag DeepJet L", 1]],
+        "DeepJvsUParT-L_pT20" : [["h_matched_Bs_btagDeepL_pt20", "btag DeepJet L p^{j}_{T}>20 GeV", 0],["h_matched_Bs_btagUParTL_pt20", "btag UParT L p^{j}_{T}>20 GeV", 1]],
+        "DeepJvsUParT-L_pT" : [["h_matched_Bs_btagDeepL_pt20", "btag DeepJet L p^{j}_{T}>20 GeV", 0],["h_matched_Bs_btagUParTL_pt20", "btag UParT L p^{j}_{T}>20 GeV", 1], ["h_matched_Bs_btagUParTL_pt30", "btag UParT L p^{j}_{T}>30 GeV", 1]]
+    }
 }

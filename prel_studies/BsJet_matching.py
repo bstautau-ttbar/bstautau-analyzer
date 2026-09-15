@@ -58,12 +58,6 @@ matched_jet_histos = {
     "dr"  : {
         "template" : ROOT.TH1F("matched_jet_dr", "Matched Jet #Delta R;#Delta R;Jets", 50, 0, 0.5),
     },
-    #"btagDeepFlavB" : {
-    #    "template" : ROOT.TH1F("matched_jet_btagDeepFlavB", "Matched Jet btagDeepFlavB;btagDeepFlavB;Jets", 50, 0, 1),
-    #},
-    #"btagUParTAK4B" : {
-    #    "template" : ROOT.TH1F("matched_jet_btagUParTAK4B", "Matched Jet btagUParTAK4B;btagUParTAK4B;Jets", 50, 0, 1),
-    #},
 }
  
 if __name__ == "__main__":
@@ -106,19 +100,25 @@ if __name__ == "__main__":
         xlo = 0
         xhi = 200
         
-        h_den            = ROOT.TH1F("h_good_j","h_good_j",nbins,bins)
-        h_num            = ROOT.TH1F("h_matched_j","h_matched_j",nbins,bins)
-        h_num_btagDeepL  = ROOT.TH1F("h_matched_j_btagDeepL","h_matched_j_btagDeepL",    nbins,bins)
-        h_num_btagDeepM  = ROOT.TH1F("h_matched_j_btagDeepM","h_matched_j_btagDeepM",    nbins,bins)
-        h_num_btagDeepT  = ROOT.TH1F("h_matched_j_btagDeepT","h_matched_j_btagDeepT",    nbins,bins)
-        h_num_btagUParTL = ROOT.TH1F("h_matched_j_btagUParTL","h_matched_j_btagUParTL", nbins,bins)
-        h_num_btagUParTM = ROOT.TH1F("h_matched_j_btagUParTM","h_matched_j_btagUParTM", nbins,bins)
-        h_num_btagUParTT = ROOT.TH1F("h_matched_j_btagUParTT","h_matched_j_btagUParTT", nbins,bins)
+        h_den            = ROOT.TH1F("h_all_Bs","h_all_Bs",nbins,bins)
+        h_num            = ROOT.TH1F("h_matched_Bs","h_matched_Bs",nbins,bins)
+        h_num_btagDeepL  = ROOT.TH1F("h_matched_Bs_btagDeepL", "h_matched_Bs_btagDeepL",    nbins,bins)
+        h_num_btagDeepL_pt20 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt20", "h_matched_Bs_btagDeepL_pt20",    nbins,bins)
+        h_num_btagDeepL_pt30 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt30", "h_matched_Bs_btagDeepL_pt30",    nbins,bins)
+        h_num_btagDeepM  = ROOT.TH1F("h_matched_Bs_btagDeepM", "h_matched_Bs_btagDeepM",    nbins,bins)
+        #h_num_btagDeepT  = ROOT.TH1F("h_matched_Bs_btagDeepT", "h_matched_Bs_btagDeepT",    nbins,bins)
+        h_num_btagUParTL = ROOT.TH1F("h_matched_Bs_btagUParTL","h_matched_Bs_btagUParTL", nbins,bins)
+        h_num_btagUParTL_pt20 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt20","h_matched_Bs_btagUParTL_pt20", nbins,bins)
+        h_num_btagUParTL_pt30 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt30","h_matched_Bs_btagUParTL_pt30", nbins,bins)
+        h_num_btagUParTM = ROOT.TH1F("h_matched_Bs_btagUParTM","h_matched_Bs_btagUParTM", nbins,bins)
+        #h_num_btagUParTT = ROOT.TH1F("h_matched_Bs_btagUParTT","h_matched_Bs_btagUParTT", nbins,bins)
 
         out_histos = {h.GetName(): h for h in [
             h_den, h_num, 
-            h_num_btagDeepL, h_num_btagDeepM, h_num_btagDeepT,
-            h_num_btagUParTL, h_num_btagUParTM, h_num_btagUParTT]
+            h_num_btagDeepL, h_num_btagDeepL_pt20, h_num_btagDeepL_pt30,
+            h_num_btagDeepM,
+            h_num_btagUParTL, h_num_btagUParTL_pt20, h_num_btagUParTL_pt30,
+            h_num_btagUParTM,]
             }
         for _, h in out_histos.items():
             h.Sumw2()
@@ -168,17 +168,23 @@ if __name__ == "__main__":
                     if isTauhadronic > 0 :
                         h_den.Fill(genpart.pt)
                         jet, dr = closest(genpart,jets)
-                        j_btag  = jet.btagDeepFlavB if jet is not None else -1
-                        jet.dr  = dr if jet is not None else -1
+                        if jet is None:
+                            if DEBUG: print("\t\t no jet in this event")
+                            continue
+                        j_btag  = jet.btagDeepFlavB
+                        jet.dr  = dr
                         if (DEBUG) : print(f"\t\t closest jet with pT {jet.pt} | dR {dr:.3f} | btag {j_btag:.3f}")
                         
                         if (dr<0.4 and jet.pt>10 and abs(jet.eta)<2.5): # good matched jets
                             h_num.Fill(genpart.pt)
                             
                             # btagDeepFlavB selection
-                            if (j_btag > dtk.selection.btag_wpval['L']): h_num_btagDeepL.Fill(genpart.pt)
-                            if (j_btag > dtk.selection.btag_wpval['M']): h_num_btagDeepM.Fill(genpart.pt)
-                            if (j_btag > dtk.selection.btag_wpval['T']): h_num_btagDeepT.Fill(genpart.pt)
+                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['L']): 
+                                h_num_btagDeepL.Fill(genpart.pt)
+                                if (jet.pt > 20): h_num_btagDeepL_pt20.Fill(genpart.pt)
+                                if (jet.pt > 30): h_num_btagDeepL_pt30.Fill(genpart.pt)
+                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['M']): h_num_btagDeepM.Fill(genpart.pt)
+                            #if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['T']): h_num_btagDeepT.Fill(genpart.pt)
 
                             try:
                                 j_btag = jet.btagUParTAK4B
@@ -187,9 +193,12 @@ if __name__ == "__main__":
                                 has_uparT = False
 
                             if has_uparT:
-                                if (j_btag > dtk.selection.btagUParT_wpval['L']): h_num_btagUParTL.Fill(genpart.pt)
-                                if (j_btag > dtk.selection.btagUParT_wpval['M']): h_num_btagUParTM.Fill(genpart.pt)
-                                if (j_btag > dtk.selection.btagUParT_wpval['T']): h_num_btagUParTT.Fill(genpart.pt)
+                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['L']): 
+                                    h_num_btagUParTL.Fill(genpart.pt)
+                                    if (jet.pt > 20): h_num_btagUParTL_pt20.Fill(genpart.pt)
+                                    if (jet.pt > 30): h_num_btagUParTL_pt30.Fill(genpart.pt)
+                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['M']): h_num_btagUParTM.Fill(genpart.pt)
+                                #if (j_btag > dtk.selection.btagUParT_wpval['upartB']['2018']['T']): h_num_btagUParTT.Fill(genpart.pt)
 
                             for var, cfg in matched_jet_histos.items():
                                 cfg["template"].Fill(getattr(jet,var))
