@@ -19,6 +19,7 @@ The main options are:
 |`--mc_only`| | `False` | Skip data |
 |`--Nevents`| `-N` | `None` | MAX number of events to process. None: all events |
 | `--test_samples` | | `False` | Run on few samples : $t\bar t$ fullylep, semilep and $B_s\tau\tau$ signal. |
+| `--sample` | | `None` | Process only this single sample (MC key, e.g. `tt_fullylep`, or data key, e.g. `data_sm`). Used by `submit_onCondor.py` to split the production per-sample. |
 
 
 **Example:** running on a test production of custom-nanoAODv15 ntuples with ParT-tagger inference 
@@ -87,3 +88,7 @@ Output files are named `<sample>_wsfs.root` and written to the `outpath_template
 ## Additional scripts
 
 - **`genmatching.py`** — studies the efficiency of matching $B_s$ to b-tagged jets at generator level (CHS and PUPPI jets). Run with `--input` pointing to a signal ntuple.
+- **`submit_onCondor.py`** — submits `main.py` on HTCondor, one job per individual sample (and per channel). Accepts the same `--input`, `--outdirectory`, `--channels`, `--mc_only`, `--test_samples`, `--Nevents` options as `main.py`, plus `--tag` (Farm directory label), `--queue` (HTCondor `+JobFlavour`) and `--submit` (actually call `condor_submit`; omit for a dry-run). Example:
+  ```bash
+  python3 submit_onCondor.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --submit
+  ```

@@ -30,6 +30,7 @@ dist/
 
 # condor
 *cbasile.cc
+jobLogs*/
 
 # vscode cache
 *.vscode

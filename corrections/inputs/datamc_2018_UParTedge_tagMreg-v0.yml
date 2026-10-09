@@ -1,9 +1,9 @@
 MC :
-  inpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/"
-  outpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/sfs_applied"
+  inpath_template: "/eos/cms/store/group/cmst3/group/bpark/bstautau/nanov15_skim/{channel}_2018_tagMreg/"
+  outpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_tagMreg/sfs_applied"
 data:
-  inpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/"
-  outpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/sfs_applied"
+  inpath_template: "/eos/cms/store/group/cmst3/group/bpark/bstautau/nanov15_skim/{channel}_2018_tagMreg/"
+  outpath_template: "/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_tagMreg/sfs_applied"
 common:
   year: 2018
   treename : Events

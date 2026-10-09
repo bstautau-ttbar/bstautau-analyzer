@@ -76,8 +76,12 @@ def parse_arguments():
                         help=f'process only MC samples (no data).'
                         )
     parser.add_argument('--test_samples',
-                        action='store_true', 
+                        action='store_true',
                         help='Run only on signal and ttbar samples for quick testing'
+                        )
+    parser.add_argument('--sample',
+                        default=None,
+                        help='process only this single sample (MC key, e.g. tt_fullylep, or data key, e.g. data_sm). Used to split the production per-sample on batch.'
                         )
     parser.add_argument('-N', '--Nevents',
                         type=int, default=None,
@@ -100,6 +104,7 @@ if __name__ == "__main__":
     year       = str(in_info.get('common', {}).get('year', 2018))
     _testmode_ = args.test_samples
     _mc_only_  = args.mc_only
+    _sample_   = args.sample
     nevents    = args.Nevents
     _multit_   = setup_multithreading(nevents)
 
@@ -113,6 +118,9 @@ if __name__ == "__main__":
     if (_testmode_):
         utils.logger.print_info(" TEST MODE ENABLED")
         used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
+    if (_sample_):
+        utils.logger.print_info(f" SINGLE-SAMPLE MODE: {_sample_}")
+        used_mc_samples_names = [_sample_] if _sample_ in used_mc_samples_names else []
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
     
     samples = dict()
@@ -147,10 +155,13 @@ if __name__ == "__main__":
         # DATA
         if not (_mc_only_ or _testmode_):
             print(" ... loading DATA samples")
+            data_samples_names = data.samples.data_samples_names
+            if (_sample_):
+                data_samples_names = {ch: [_sample_] if _sample_ in data_samples_names.get(ch, []) else []}
             data_samples, _ = data.ioutils.load_data_samples(
                 tree_dir,
                 ch,
-                data.samples.data_samples_names,
+                data_samples_names,
                 year,
                 data.samples.files_names,
                 _tree_name,
@@ -212,7 +223,7 @@ if __name__ == "__main__":
             
             # select jets for analysis (e.g. 2 leading jets passing b-tagging WP)
             samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], analysis_jet_branch, 
-                                                                        gen_matching_condition = None, #FIXME : add gen-matching for  signal 
+                                                                        gen_matching_condition = None, # bstautau_conditions['general'] if _is_signal_ else None (only gen-matched for signal)
                                                                         add_branches = ['signalBs_mask', 'signalBsTauhh_mask', 'signalBsTauhe_mask', 'signalBsTauhmu_mask'] if _is_signal_ else [],
                                                                         all_jets = False, # True to keep all jets passing
                                                                         )
@@ -265,7 +276,7 @@ if __name__ == "__main__":
                     # top pT re-weight in ttbar
                     topsf_branches = sf.sf_computation.compute_top_pTreweight(chunk, 'tt' in name or _is_signal_)
 
-                    ## b-tag scale factors
+                    ## b-tag scale factors # FIXME : remove for the moment -> check |eta| max for PUPPI jets
                     btagsf_branches = sf.sf_computation.compute_btag_sf(chunk, ch, year,
                                                                         jetbranch   = "j_sel",
                                                                         wp          = data.selection.btag_chwp[year][ch][0],
