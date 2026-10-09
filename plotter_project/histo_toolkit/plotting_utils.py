@@ -60,7 +60,7 @@ def create_legend(temp_hists, samples_for_legend, titles):
     return leg
 
 # ----------- PROCESSING HISTOGRAMS AND PLOTTING ----------------
-
+# FIXME don't need the channel to pass explicitly
 def initialize_histograms(histos, samples, ch, norm_weight = 'tot_weight', sys_uncertainty = True):
     """
         Initialize the histograms for a given channel and set of samples

@@ -117,8 +117,8 @@ trigger_exclusions = {
 
 # -- JETS --
 unique_minjet_cond = '&&'.join([
-    '(j_pt > 20)', # b-tagging SFs (JEC pT>10 GeV)
-    '(abs(j_eta)< 2.5)',
+    '(j_pt > 20)', # b-tagging SFs (JEC pT>10 GeV puppi maybe 30 GeV)
+    '(abs(j_eta)< 2.4)', # b-tagging SFs (JEC |eta|<2.4) #FIXME check in other years
 ])
 min_jet_selection = {
     'emu'   : unique_minjet_cond,
@@ -143,22 +143,17 @@ btag_wpval  = {
         '2018' : {
             'L' : 0.0499,
             'M' : 0.2770,
-            'T' : 0.7100
+            #'T' : 0.7100
         }
     },
     'upartB' : { # https://btv-wiki.docs.cern.ch/ScaleFactors/Run2UL2018NanoAODv15/ 
         '2018' : {
             'L' : 0.0308,
             'M' : 0.1610,
-            'T' : 0.5405
+            #'T' : 0.5405
         }
     }
     
-}
-btagUParT_wpval = { 
-    'L' : 0.0308,
-    'M' : 0.1610,
-    'T' : 0.5405
 }
 btag_chwp   = {
     '2018' : {

@@ -328,7 +328,7 @@ def build_weight_string(k, sf=True, btag_sfs=False):
 
     if btag_sfs:
         print(f" [W] b-tag scale factors")
-        weight_terms.append('btag_event_weight') #only btagging SFs are applied
+        weight_terms.append('btag_sf') #only btagging SFs are applied
 
     return '*'.join(weight_terms)
 

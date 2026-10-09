@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
             # event weight
             if 'data' not in name:
-                weight_str = data.defutils.build_weight_string(name, sf=True, btag_sfs=False)
+                weight_str = data.defutils.build_weight_string(name, sf=True, btag_sfs=True)
                 samples[ch][name] = samples[ch][name].Define('tot_weight', weight_str)
             
             # --- JET branches specfic fo histograms
@@ -240,11 +240,11 @@ if __name__ == '__main__':
                 bstautau_conditions = None
 
             #samples[ch][name]     =  data.defutils.define_jets_with_btagging_selection_for_histos(samples[ch][name], part_samples=part_samples, plot_all_jets=plot_all_jets)
-            # select jets for the analysis
-            samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], jet_branch, 
-                                                                        gen_matching_condition = bstautau_conditions['general'] if _is_bstautau_ else None, 
-                                                                        all_jets = plot_all_jets
-                                                                        )
+            # select jets for the analysis # N.B. moved to corrections step.
+            #samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], jet_branch, 
+            #                                                            gen_matching_condition = bstautau_conditions['general'] if _is_bstautau_ else None, 
+            #                                                            all_jets = plot_all_jets
+            #                                                            )
             
             samples[ch][name] = tagger.part_scores_functions.define_combined_scores(samples[ch][name], 
                                                                                     f'{jet_branch}_for_histo', 
@@ -252,12 +252,22 @@ if __name__ == '__main__':
                                                                                     False, #'bstautau' in name, # FIXME: adjust mask
                                                                                     bstautau_conditions
                                                                                     )
-            
-            # Apply  cuts filter and ONLY use those histograms
+            # index categories based on max scores
+            samples[ch][name] = tagger.part_scores_functions.define_jet_class_mask(samples[ch][name], 
+                                                                                  f'{jet_branch}_for_histo', 
+                                                                                  tau_scores, bkg_scores,
+                                                                                  )
+            # Apply  cuts filter and ONLY use those histograms (OLD)
             samples[ch][name] = tagger.part_scores_functions.apply_part_sequential_cuts_filter(samples[ch][name], 
                                                                                                f'{jet_branch}_for_histo', 
                                                                                                is_bstautau='bstautau' in name
                                                                                                )
+            # jet-category based on max tagger score (NEW)
+            samples[ch][name] = tagger.part_scores_functions.split_jet_category(samples[ch][name],
+                                                                                f'{jet_branch}_for_histo',
+                                                                                tau_scores,
+                                                                                f'{jet_branch}_for_histo_part_class_mask')
+            
             #histos[ch] = {}  # Clear regular histos
             #histos[ch].update(histos_part_selections)  # Only add sequential cuts histos
                 
@@ -329,7 +339,8 @@ if __name__ == '__main__':
         print("-------- DONE --------")
     # end of channel loop
     
-    utils.logger.print_success(f"\n Output plot in {out_dir}")
+    if make_histos:
+        utils.logger.print_success(f"\n Output plot in {out_dir}")
 
     elapsed_time = time.time() - start_time
     utils.logger.print_bold(f"\n>>> DONE AFTER {elapsed_time//60:.0f}m {elapsed_time%60:.0f}s <<<")

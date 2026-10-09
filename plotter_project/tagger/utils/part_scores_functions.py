@@ -18,18 +18,18 @@ def define_combined_scores(
     total_sum   = sum_expr(parT_scores, jet_branch)
     bkg_sum     = sum_expr(bkg_scores, jet_branch)
 
-    # Define score sums
+    # tagger score sums
     samples = samples.Define(f"{jet_branch}_{_score_base}_sig_sum",     sig_sum)
-    samples = samples.Define(f"{jet_branch}_{_score_base}_total_sum",   total_sum)
     samples = samples.Define(f"{jet_branch}_{_score_base}_bkg_sum",     bkg_sum)
+    samples = samples.Define(f"{jet_branch}_{_score_base}_total_sum",   total_sum)
     #print(f"Defined combined scores for {jet_branch}: sig_sum, total_sum, bkg_sum")
     
-    # Define all signals vs all bkgs
-    sig_frac_var = f"{jet_branch}_{_score_base}_all_sig_frac"
-    samples = samples.Define(sig_frac_var, f"{jet_branch}_{_score_base}_sig_sum/{jet_branch}_{_score_base}_total_sum")
+    # sig-sum vs all bkgs
+    samples = samples.Define(f"{jet_branch}_{_score_base}_all_sig_frac", 
+                             f"{jet_branch}_{_score_base}_sig_sum/{jet_branch}_{_score_base}_total_sum")
     #print(f"Defined combined score fraction: {sig_frac_var} = {jet_branch}_{_score_base}_sig_sum / {jet_branch}_{_score_base}_total_sum")
     
-    # Define per-tau fraction and masked histograms for bstautau
+    # per signal class fraction
     for tau in tau_scores:
         #print(f"[define_combined_scores()] per-tau fraction for {tau} in {jet_branch}")
         tau_var     = var(tau, jet_branch)
@@ -68,6 +68,69 @@ def define_combined_scores(
         #print(f"[define_combined_scores()] {ratio_var} = {expr}")
 
     return samples
+
+def define_jet_class_mask(
+    samples,
+    jet_branch,
+    tau_scores,
+    bkg_scores,
+    mask_name=None,
+):
+    """
+    Define an integer mask per jet that marks which class has the largest score,
+    among each of the signal (tauhtaux) scores.
+
+    For jet j:
+        mask[j] = argmax([tau_scores[0], tau_scores[1], tau_scores[2]])
+
+    i.e. 
+         mask[j] ==  0 -> tau_scores[0] is the largest
+         mask[j] ==  1 -> tau_scores[1] is the largest
+         mask[j] ==  2 -> tau_scores[2] is the largest
+    """
+    #print(f"[define_jet_class_mask()] Defining jet class mask for {jet_branch} with tau_scores={tau_scores} and bkg_scores={bkg_scores}")
+    bkg_sum_expr = sum_expr(bkg_scores, jet_branch)
+    tau_vars     = [var(score, jet_branch) for score in tau_scores]
+    class_score  = tau_vars #[bkg_sum_expr] + tau_vars
+
+    mask_name = mask_name or f"{jet_branch}_{_score_base}_class_mask"
+
+    samples = samples.Define(mask_name, f"""
+        //ROOT::RVec<double> bkg_sum  = {class_score[0]};
+        ROOT::RVec<double> tau0     = {class_score[0]};
+        ROOT::RVec<double> tau1     = {class_score[1]};
+        ROOT::RVec<double> tau2     = {class_score[2]};
+
+        ROOT::VecOps::RVec<int> mask(tau0.size());
+        for (size_t i = 0; i < tau0.size(); ++i) {{ // loop over jets
+            std::array<double, 4> class_scores = {{tau0[i], tau1[i], tau2[i]}};
+            int max_idx = std::distance(class_scores.begin(), std::max_element(class_scores.begin(), class_scores.end()));
+            //print the values for debugging
+            //std::cout << "Jet " << i << ": tau0=" << tau0[i] << ", tau1=" << tau1[i] << ", tau2=" << tau2[i] << ", max_idx=" << max_idx << std::endl;
+            mask[i] = max_idx;
+        }}
+        return mask;
+    """)
+
+    return samples
+
+def split_jet_category(
+    sample,
+    jet_branch,
+    tau_scores, # tauhtaux scores
+    class_mask, # mask variable name that indicates which tauhtaux score is the largest for each jet
+):
+    """
+    Split the jets into different categories based on class_mask.
+    """
+    for i, tau in enumerate(tau_scores):
+        jet_var = var(tau_scores[i], jet_branch) + '_frac' # Use the first tau score as representative for jet properties
+        print(f"[split_jet_category()] Defined {jet_var}_class{i}")
+        sample = sample.Define(f"{jet_var}_class{i}", f"{jet_var}[{class_mask} == {i}]")
+
+    return sample
+
+### -------
 
 def define_max_scores(
     samples,
