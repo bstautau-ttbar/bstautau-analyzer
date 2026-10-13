@@ -173,7 +173,7 @@ if __name__ == '__main__':
         datetime.now().strftime('%d%b%Y_%Hh%Mm%Ss')
         ]))
     out_dir        = out_dir_base.format(year=year, label=label)
-    hitsos_to_plot = htools.histos_baseline.histos_test if test_histos else htools.histos_baseline.histos
+    hitsos_to_plot = htools.histos_config.histo_testmode  #htools.histos_baseline.histos_test if test_histos else htools.histos_baseline.histos
     if make_histos:
         htools.io.make_directories_for_plots(out_dir, channels, flavor_based=flavor)
 
@@ -309,21 +309,21 @@ if __name__ == '__main__':
         temp_hists = None
         temp_flavor_hists = None
         print(" > sample-based ")
-        temp_hists = htools.plotting_utils.initialize_histograms(hitsos_to_plot, samples, ch, sys_uncertainty=False)
+        temp_hists = htools.plotting_kit.initialize_histograms(hitsos_to_plot[ch], samples[ch], norm_weight='tot_weight')
         
         if not temp_hists:
             utils.logger.print_error(f" In histogram initialization for channel {ch}. SKIPPING...")
             continue
         
-        if flavor:
+        if flavor: # N.B. not checked yet!
             print(" > flavor-based ")
             temp_flavor_hists = htools.plotting_flavourbased_utils.initialize_flavor_histograms(hitsos_to_plot, samples, ch)
 
         # actually process the histograms and produce the plots
         print(" > plotting histograms ...")
         c1, main_pad, ratio_pad = htools.plotting_utils.create_canvas_with_pads()
-        htools.plotting_utils.process_histograms(
-            hitsos_to_plot, temp_hists, 
+        htools.plotting_kit.process_histograms(
+            hitsos_to_plot[ch], temp_hists, 
             samples, ch, 
             data.samples.colours, 
             out_dir, 
