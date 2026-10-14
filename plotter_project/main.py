@@ -166,10 +166,10 @@ if __name__ == '__main__':
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 
     # output plots
-    out_dir_base  = './plots/test_{year}_{label}' if _testmode_ else in_info.get('common', {}).get('outpath_template', None)
+    out_dir_base  = in_info.get('common', {}).get('outpath_template', None)
     label = "_".join(filter(None, [
         year, 
-        "test" if _testmode_ else None,
+        "testmode" if _testmode_ else None,
         datetime.now().strftime('%d%b%Y_%Hh%Mm%Ss')
         ]))
     out_dir        = out_dir_base.format(year=year, label=label)
@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
             # event weight
             if 'data' not in name:
-                weight_str = data.defutils.build_weight_string(name, sf=True, btag_sfs=True)
+                weight_str = data.defutils.build_weight_string(ch, sf=True, btag_sfs=True)
                 samples[ch][name] = samples[ch][name].Define('tot_weight', weight_str)
             
             # --- JET branches specfic fo histograms

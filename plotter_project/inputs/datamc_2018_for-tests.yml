@@ -1,0 +1,13 @@
+MC :
+  inpath_template: "/eos/cms/store/group/cmst3/group/bpark/bstautau/nanov15_skim/{channel}_2018_tagMreg/"
+  inpath_template_wsfs: "../corrections/tmp_output/"
+  plotter_histos: None
+data:
+  inpath_template: "/eos/cms/store/group/cmst3/group/bpark/bstautau/nanov15_skim/{channel}_2018_tagMreg/"
+  inpath_template_wsfs: "../corrections/tmp_output/"
+  plotter_histos: None
+common:
+  year: 2018
+  treename : Events
+  outpath_template: "./plots/testTagMreg_{year}_{label}"
+  

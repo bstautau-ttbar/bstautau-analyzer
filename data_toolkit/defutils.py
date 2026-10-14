@@ -305,12 +305,12 @@ def match_BsToJets(data,
 
 
 # ------ WEIGHTS ------
-def build_weight_string(k, sf=True, btag_sfs=False):
+def build_weight_string(ch, sf=True, btag_sfs=False):
     """
     Constructs a weight expression string based on sample name and options.
 
     Args:
-        k (str): Sample key.
+        ch (str): Channel # FIXME : temporary -> all sample have all sf branches with correction = 1. if no SF needed.
         files_names (dict): Mapping of sample keys to filenames.
         options (dict): Dict of flags like compute_sfs, use_ntuples_with_sfs, etc.
 
@@ -324,7 +324,12 @@ def build_weight_string(k, sf=True, btag_sfs=False):
 
     if sf:
         print(f" [W] object scale factors")
-        weight_terms.extend(['mu_sf_weight', 'e_sf_weight', 'trg_sf_weight']) #only SFs are applied
+        if ch in ['mu', 'mumu']:
+            weight_terms.extend(['mu_sf_weight', 'trg_sf_weight']) #only SFs are applied
+        elif ch in ['e', 'ee']:
+            weight_terms.extend(['e_sf_weight', 'trg_sf_weight']) #only SFs are applied
+        else:
+            weight_terms.extend(['mu_sf_weight', 'e_sf_weight', 'trg_sf_weight']) #only SFs are applied
 
     if btag_sfs:
         print(f" [W] b-tag scale factors")
