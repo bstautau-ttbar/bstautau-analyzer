@@ -18,5 +18,11 @@
         "DeepJvsUParT-L"     : [["h_matched_Bs_btagDeepL", "btag DeepJet L", 0],["h_matched_Bs_btagDeepL", "btag DeepJet L", 1]],
         "DeepJvsUParT-L_pT20" : [["h_matched_Bs_btagDeepL_pt20", "btag DeepJet L p^{j}_{T}>20 GeV", 0],["h_matched_Bs_btagUParTL_pt20", "btag UParT L p^{j}_{T}>20 GeV", 1]],
         "DeepJvsUParT-L_pT" : [["h_matched_Bs_btagDeepL_pt20", "btag DeepJet L p^{j}_{T}>20 GeV", 0],["h_matched_Bs_btagUParTL_pt20", "btag UParT L p^{j}_{T}>20 GeV", 1], ["h_matched_Bs_btagUParTL_pt30", "btag UParT L p^{j}_{T}>30 GeV", 1]]
+    },
+    "ref2d" : "h2_all_Bs",
+    "compare2d": {
+        "matched_Bs_CHS"            : ["h2_matched_Bs", 0],
+        "matched_Bs_PUPPI"          : ["h2_matched_Bs", 1],
+        "matched_Bs_btagUParTL_PUPPI" : ["h2_matched_Bs_btagUParTL", 1]
     }
 }

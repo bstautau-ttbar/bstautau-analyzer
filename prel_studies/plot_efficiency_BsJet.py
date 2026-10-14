@@ -38,6 +38,35 @@ def style_efficiency(graph, color=ROOT.kBlue, marker=20):
     graph.SetMarkerSize(1.2)
     graph.SetLineWidth(2)
 
+def plot_2d_efficiency(infile, num_name, den_name, outname, outdir):
+    f = ROOT.TFile(infile)
+    h_num = f.Get(num_name)
+    h_den = f.Get(den_name)
+
+    eff2d = ROOT.TEfficiency(h_num, h_den)
+    eff2d.SetName(f"eff2d_{num_name}")
+    eff2d.Draw("COLZ")
+    ROOT.gPad.Update()
+    h_painted = eff2d.GetPaintedHistogram()
+    h_painted.SetTitle("")
+    h_painted.GetXaxis().SetTitle("p_{T}^{gen}(B_{s}) (GeV)")
+    h_painted.GetYaxis().SetTitle("#eta^{gen}(B_{s})")
+    h_painted.GetZaxis().SetTitle("matched fraction")
+    h_painted.GetZaxis().SetRangeUser(0, 1)
+
+    canv = cms.cmsCanvas(f'c2d_{outname}',
+                         h_painted.GetXaxis().GetXmin(), h_painted.GetXaxis().GetXmax(),
+                         h_painted.GetYaxis().GetXmin(), h_painted.GetYaxis().GetXmax(),
+                         "p_{T}^{gen}(B_{s}) (GeV)", "#eta^{gen}(B_{s})",
+                         square=False, extraSpace=0.02, iPos=10
+                        )
+    canv.SetRightMargin(0.18)
+    canv.cd()
+    h_painted.Draw("COLZ SAME")
+
+    canv.SaveAs(os.path.join(outdir, f"efficiency2d_{outname}.png"))
+    canv.SaveAs(os.path.join(outdir, f"efficiency2d_{outname}.pdf"))
+
 if __name__ == "__main__":
     args = get_arguments()
     with open(args.config, 'r') as f:
@@ -48,6 +77,8 @@ if __name__ == "__main__":
     outdir  = config.get('outdir', None)
     ref     = config.get('ref', None)
     compare = config.get('compare', None)
+    ref2d     = config.get('ref2d', None)
+    compare2d = config.get('compare2d', None)
     extraText = config.get('extraText', None)
     
     # input files
@@ -125,3 +156,12 @@ if __name__ == "__main__":
         legend.Draw()
         canv.SaveAs(os.path.join(outdir, f"efficiency_{outname}.png"))
         canv.SaveAs(os.path.join(outdir, f"efficiency_{outname}.pdf"))
+
+    if compare2d:
+        print("---"*10+"\n")
+        for outname, h_cfg in compare2d.items():
+            hname = h_cfg[0]
+            index = h_cfg[1]
+            file  = files[index]
+            print(f"   - 2D {outname} : {hname} from {file}")
+            plot_2d_efficiency(file, hname, ref2d, outname, outdir)

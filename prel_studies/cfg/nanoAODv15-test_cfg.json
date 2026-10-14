@@ -1,0 +1,26 @@
+{
+    "infiles": [
+        "test_eta_puppi.root"
+    ],
+    "labels": [
+        "ak4PUPPI"
+    ],
+    "outdir": "./plots/",
+    "ref" : "h_all_Bs",
+    "extraText": [
+        "Bs#rightarrow#tau_{h}#tau_{x}", 
+        "|#eta_{j}| < 2.4 #DeltaR(B_{s},j)<0.4"
+    ],
+    "compare": {
+        "DeepJvsUParT-L" : [["h_matched_Bs", "", 0],["h_matched_Bs_btagDeepL", "btag DeepJet L", 0],["h_matched_Bs_btagUParTL",  "btag UParT L", 0]],   
+        "DeepJvsUParT-M" : [["h_matched_Bs", "", 0],["h_matched_Bs_btagDeepM", "btag DeepJet M", 0],["h_matched_Bs_btagUParTM",  "btag UParT M", 0]],
+        "UParT-LvsM"    : [["h_matched_Bs", "", 0],["h_matched_Bs_btagUParTL",  "btag UParT L", 0],["h_matched_Bs_btagUParTM",  "btag UParT M", 0]],
+        "UParT-LvsJpT" : [["h_matched_Bs_btagUParTL", "", 0],["h_matched_Bs_btagUParTL_pt20",  "btag UParT L p^{j}_{T}>20 GeV", 0],["h_matched_Bs_btagUParTL_pt30",  "btag UParT L p^{j}_{T}>30 GeV", 0]]
+    },
+    "ref2d" : "h2_all_Bs",
+    "compare2d": {
+        "matched_Bs"              : ["h2_matched_Bs", 0],
+        "matched_Bs_btagUParTL"   : ["h2_matched_Bs_btagUParTL", 0],
+        "matched_Bs_btagUParTM"   : ["h2_matched_Bs_btagUParTM", 0]
+    }
+}

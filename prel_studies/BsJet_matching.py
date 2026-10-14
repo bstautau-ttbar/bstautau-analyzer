@@ -19,12 +19,15 @@ def get_args():
         description="Study the matching efficiency between the Bs and Jet collection BEFORE any kinematic selection."
     )
     parser.add_argument("-i", "--input", dest="input_file",
-        default="./data/mcUL18_ParTedge_nanoAODv15.txt",
-        help="Path to the text file listing the input nanoAOD files (default: %(default)s)"
+                        default="./data/mcUL18_ParTedge_nanoAODv15.txt",
+                        help="Path to the text file listing the input nanoAOD files (default: %(default)s)"
     )
     parser.add_argument("-s", "--sample-name", dest="sample_name",
-        default="bstt",
-        help="Label used internally for the sample being processed (default: %(default)s)"
+                        default="chs", 
+                        help="Label used internally for the sample being processed (default: %(default)s)"
+    )
+    parser.add_argument("--jet_algo", dest="jet_algo", choices=["chs", "puppi"], default="chs",
+                        help="Name of the jet collection in the nanoAOD (default: %(default)s)"
     )
     parser.add_argument("--maxfiles", dest="maxfiles", 
                         type=int, default=-1,
@@ -36,15 +39,15 @@ def get_args():
     )
     parser.add_argument("--printevery", dest="printevery", 
                         type=int, default=int(1e4),
-        help="Print progress every N events (default: %(default)s)"
+                        help="Print progress every N events (default: %(default)s)"
     )
     parser.add_argument("--debug", dest="debug", 
                         action="store_true",
                         help="Enable verbose debugging printouts"
     )
     parser.add_argument("-o", "--output", dest="output_file",
-        default="efficiency_plot_new",
-        help="Output plot filename (default: %(default)s)"
+                        default="efficiency_plot_new",
+                        help="Output plot filename (default: %(default)s)"
     )
     return parser.parse_args()
 
@@ -84,43 +87,76 @@ if __name__ == "__main__":
     MAXEVENTS   = args.maxevents    # max events to process
     DEBUG       = args.debug        # helpful prints for debugging
     PRINTEVERY  = args.printevery   # print out the event number every N events
-    #samples = {"bstt":"/afs/cern.ch/user/f/friti/work/softtaus/CMSSW_13_0_10/src/bstt/reRunNano/crab_production/nanoaodv12_bstt.txt"}
-    # nanoAOD content to explore : https://cms-xpog.docs.cern.ch/autoDoc/
-    #samples = {"bstt":"./data/mcUL18_ParT_nanoAODv9.txt"}
     samples = {args.sample_name: args.input_file}
-    decay = 'B_{s} #rightarrow  #tau #tau'
+    decay = 'B_{s} #rightarrow#tau #tau'
+
+    ### jet selection
+    max_jet_dr  = 0.4
+
+    min_jet_pt  = 10  
+    max_jet_eta = 2.5 
+    if args.jet_algo == "puppi":
+        min_jet_pt  = 10  
+        max_jet_eta = 2.4
+    print(f"Using {args.jet_algo} jets with pT > {min_jet_pt} GeV and |eta| < {max_jet_eta}")
 
     for sample in samples:
         files = open(samples[sample]).readlines()
-        
 
         ####### pT histograms definition
-        bins = array('d', [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80, 90, 100, 150, 200])
-        nbins = len(bins)-1
+        pt_bins = array('d', [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80, 90, 100, 150, 200])
+        npt_bins = len(pt_bins)-1
         xlo = 0
         xhi = 200
-        
-        h_den            = ROOT.TH1F("h_all_Bs","h_all_Bs",nbins,bins)
-        h_num            = ROOT.TH1F("h_matched_Bs","h_matched_Bs",nbins,bins)
-        h_num_btagDeepL  = ROOT.TH1F("h_matched_Bs_btagDeepL", "h_matched_Bs_btagDeepL",    nbins,bins)
-        h_num_btagDeepL_pt20 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt20", "h_matched_Bs_btagDeepL_pt20",    nbins,bins)
-        h_num_btagDeepL_pt30 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt30", "h_matched_Bs_btagDeepL_pt30",    nbins,bins)
-        h_num_btagDeepM  = ROOT.TH1F("h_matched_Bs_btagDeepM", "h_matched_Bs_btagDeepM",    nbins,bins)
-        #h_num_btagDeepT  = ROOT.TH1F("h_matched_Bs_btagDeepT", "h_matched_Bs_btagDeepT",    nbins,bins)
-        h_num_btagUParTL = ROOT.TH1F("h_matched_Bs_btagUParTL","h_matched_Bs_btagUParTL", nbins,bins)
-        h_num_btagUParTL_pt20 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt20","h_matched_Bs_btagUParTL_pt20", nbins,bins)
-        h_num_btagUParTL_pt30 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt30","h_matched_Bs_btagUParTL_pt30", nbins,bins)
-        h_num_btagUParTM = ROOT.TH1F("h_matched_Bs_btagUParTM","h_matched_Bs_btagUParTM", nbins,bins)
-        #h_num_btagUParTT = ROOT.TH1F("h_matched_Bs_btagUParTT","h_matched_Bs_btagUParTT", nbins,bins)
+
+        ####### eta binning for the 2D (pT, eta) efficiency maps
+        eta_bins = array('d', [-2.5, -1.6, -0.8, 0, 0.8, 1.6, 2.5])
+        neta_bins = len(eta_bins)-1
+
+        h_den            = ROOT.TH1F("h_all_Bs","h_all_Bs",npt_bins,pt_bins)
+        h_num            = ROOT.TH1F("h_matched_Bs","h_matched_Bs",npt_bins,pt_bins)
+        h_num_btagDeepL  = ROOT.TH1F("h_matched_Bs_btagDeepL", "h_matched_Bs_btagDeepL",    npt_bins,pt_bins)
+        h_num_btagDeepL_pt20 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt20", "h_matched_Bs_btagDeepL_pt20",    npt_bins,pt_bins)
+        h_num_btagDeepL_pt30 = ROOT.TH1F("h_matched_Bs_btagDeepL_pt30", "h_matched_Bs_btagDeepL_pt30",    npt_bins,pt_bins)
+        h_num_btagDeepM  = ROOT.TH1F("h_matched_Bs_btagDeepM", "h_matched_Bs_btagDeepM",    npt_bins,pt_bins)
+        #h_num_btagDeepT  = ROOT.TH1F("h_matched_Bs_btagDeepT", "h_matched_Bs_btagDeepT",    npt_bins,pt_bins)
+        h_num_btagUParTL = ROOT.TH1F("h_matched_Bs_btagUParTL","h_matched_Bs_btagUParTL", npt_bins,pt_bins)
+        h_num_btagUParTL_pt20 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt20","h_matched_Bs_btagUParTL_pt20", npt_bins,pt_bins)
+        h_num_btagUParTL_pt30 = ROOT.TH1F("h_matched_Bs_btagUParTL_pt30","h_matched_Bs_btagUParTL_pt30", npt_bins,pt_bins)
+        h_num_btagUParTM = ROOT.TH1F("h_matched_Bs_btagUParTM","h_matched_Bs_btagUParTM", npt_bins,pt_bins)
+        #h_num_btagUParTT = ROOT.TH1F("h_matched_Bs_btagUParTT","h_matched_Bs_btagUParTT", npt_bins,pt_bins)
 
         out_histos = {h.GetName(): h for h in [
-            h_den, h_num, 
+            h_den, h_num,
             h_num_btagDeepL, h_num_btagDeepL_pt20, h_num_btagDeepL_pt30,
             h_num_btagDeepM,
             h_num_btagUParTL, h_num_btagUParTL_pt20, h_num_btagUParTL_pt30,
             h_num_btagUParTM,]
             }
         for _, h in out_histos.items():
+            h.Sumw2()
+            h.SetDirectory(0)
+
+        ####### 2D (pT, eta) histograms definition, one per 1D histogram above
+        h2_den            = ROOT.TH2F("h2_all_Bs","h2_all_Bs",npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num            = ROOT.TH2F("h2_matched_Bs","h2_matched_Bs",npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagDeepL  = ROOT.TH2F("h2_matched_Bs_btagDeepL", "h2_matched_Bs_btagDeepL",    npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagDeepL_pt20 = ROOT.TH2F("h2_matched_Bs_btagDeepL_pt20", "h2_matched_Bs_btagDeepL_pt20",    npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagDeepL_pt30 = ROOT.TH2F("h2_matched_Bs_btagDeepL_pt30", "h2_matched_Bs_btagDeepL_pt30",    npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagDeepM  = ROOT.TH2F("h2_matched_Bs_btagDeepM", "h2_matched_Bs_btagDeepM",    npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagUParTL = ROOT.TH2F("h2_matched_Bs_btagUParTL","h2_matched_Bs_btagUParTL", npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagUParTL_pt20 = ROOT.TH2F("h2_matched_Bs_btagUParTL_pt20","h2_matched_Bs_btagUParTL_pt20", npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagUParTL_pt30 = ROOT.TH2F("h2_matched_Bs_btagUParTL_pt30","h2_matched_Bs_btagUParTL_pt30", npt_bins,pt_bins,neta_bins,eta_bins)
+        h2_num_btagUParTM = ROOT.TH2F("h2_matched_Bs_btagUParTM","h2_matched_Bs_btagUParTM", npt_bins,pt_bins,neta_bins,eta_bins)
+
+        out_histos_2d = {h.GetName(): h for h in [
+            h2_den, h2_num,
+            h2_num_btagDeepL, h2_num_btagDeepL_pt20, h2_num_btagDeepL_pt30,
+            h2_num_btagDeepM,
+            h2_num_btagUParTL, h2_num_btagUParTL_pt20, h2_num_btagUParTL_pt30,
+            h2_num_btagUParTM,]
+            }
+        for _, h in out_histos_2d.items():
             h.Sumw2()
             h.SetDirectory(0)
 
@@ -146,7 +182,7 @@ if __name__ == "__main__":
                 jets        = Collection(event, "Jet")
                 genparts    = Collection(event, "GenPart")
 
-                # look for bs-> tau tau first
+                # look for bs-> tau tau
                 for genpart in genparts:
                     if abs(genpart.pdgId)!=531: continue #if not Bs continue
                     daughters = []
@@ -164,26 +200,36 @@ if __name__ == "__main__":
                         for genvistau in genvistaus:
                             if (DEBUG) : print(f"\t\t genvistau with pT {genvistau.pt} | decay-mode {genvistau.status} | mother index {genvistau.genPartIdxMother}")
                             if genvistau.genPartIdxMother == daughter._index: isTauhadronic += 1
-
+                    ## match to closest jet
                     if isTauhadronic > 0 :
                         h_den.Fill(genpart.pt)
+                        h2_den.Fill(genpart.pt, genpart.eta)
                         jet, dr = closest(genpart,jets)
                         if jet is None:
                             if DEBUG: print("\t\t no jet in this event")
                             continue
+                        
                         j_btag  = jet.btagDeepFlavB
                         jet.dr  = dr
                         if (DEBUG) : print(f"\t\t closest jet with pT {jet.pt} | dR {dr:.3f} | btag {j_btag:.3f}")
                         
-                        if (dr<0.4 and jet.pt>10 and abs(jet.eta)<2.5): # good matched jets
+                        if (dr<max_jet_dr and jet.pt>min_jet_pt and abs(jet.eta)<max_jet_eta): # good matched jets
                             h_num.Fill(genpart.pt)
-                            
+                            h2_num.Fill(genpart.pt, genpart.eta)
+
                             # btagDeepFlavB selection
-                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['L']): 
+                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['L']):
                                 h_num_btagDeepL.Fill(genpart.pt)
-                                if (jet.pt > 20): h_num_btagDeepL_pt20.Fill(genpart.pt)
-                                if (jet.pt > 30): h_num_btagDeepL_pt30.Fill(genpart.pt)
-                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['M']): h_num_btagDeepM.Fill(genpart.pt)
+                                h2_num_btagDeepL.Fill(genpart.pt, genpart.eta)
+                                if (jet.pt > 20):
+                                    h_num_btagDeepL_pt20.Fill(genpart.pt)
+                                    h2_num_btagDeepL_pt20.Fill(genpart.pt, genpart.eta)
+                                if (jet.pt > 30):
+                                    h_num_btagDeepL_pt30.Fill(genpart.pt)
+                                    h2_num_btagDeepL_pt30.Fill(genpart.pt, genpart.eta)
+                            if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['M']):
+                                h_num_btagDeepM.Fill(genpart.pt)
+                                h2_num_btagDeepM.Fill(genpart.pt, genpart.eta)
                             #if (j_btag > dtk.selection.btag_wpval['deepflavB']['2018']['T']): h_num_btagDeepT.Fill(genpart.pt)
 
                             try:
@@ -193,11 +239,18 @@ if __name__ == "__main__":
                                 has_uparT = False
 
                             if has_uparT:
-                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['L']): 
+                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['L']):
                                     h_num_btagUParTL.Fill(genpart.pt)
-                                    if (jet.pt > 20): h_num_btagUParTL_pt20.Fill(genpart.pt)
-                                    if (jet.pt > 30): h_num_btagUParTL_pt30.Fill(genpart.pt)
-                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['M']): h_num_btagUParTM.Fill(genpart.pt)
+                                    h2_num_btagUParTL.Fill(genpart.pt, genpart.eta)
+                                    if (jet.pt > 20):
+                                        h_num_btagUParTL_pt20.Fill(genpart.pt)
+                                        h2_num_btagUParTL_pt20.Fill(genpart.pt, genpart.eta)
+                                    if (jet.pt > 30):
+                                        h_num_btagUParTL_pt30.Fill(genpart.pt)
+                                        h2_num_btagUParTL_pt30.Fill(genpart.pt, genpart.eta)
+                                if (j_btag > dtk.selection.btag_wpval['upartB']['2018']['M']):
+                                    h_num_btagUParTM.Fill(genpart.pt)
+                                    h2_num_btagUParTM.Fill(genpart.pt, genpart.eta)
                                 #if (j_btag > dtk.selection.btagUParT_wpval['upartB']['2018']['T']): h_num_btagUParTT.Fill(genpart.pt)
 
                             for var, cfg in matched_jet_histos.items():
@@ -210,39 +263,10 @@ if __name__ == "__main__":
         for _, h in out_histos.items():
             print(f" > {h.GetName()} written")
             h.Write()
+        for _, h in out_histos_2d.items():
+            print(f" > {h.GetName()} written")
+            h.Write()
         for var, cfg in matched_jet_histos.items():
             print(f" > {cfg['template'].GetName()} written")
             cfg["template"].Write()
         outfile.Close()         
-                    
-        ############ PLOTTING #########
-        h_num.Sumw2()
-        h_den.Sumw2()
-        h_num.Divide(h_den)
-        
-        ## legend
-        leg = ROOT.TLegend(0.24,.75,.95,.90)
-        leg.SetBorderSize(0)
-        leg.SetFillColor(0)
-        leg.SetFillStyle(0)
-        leg.SetTextFont(42)
-        leg.SetTextSize(0.035)
-
-        leg.AddEntry(h_num,'B_{s}#rightarrow #tau_{h}#tau_{X} #Delta R(j,B_{s}) <0.4','P')
-        c1.cd()
-        h_num.SetTitle(";GEN B_{s} p_{T} (GeV) ;ak4/B_{s} matching efficiency")
-        h_num.SetFillColor(ROOT.kWhite)
-        h_num.SetLineColor(ROOT.kMagenta)
-        h_num.SetMarkerColor(ROOT.kMagenta)
-        h_num.SetMinimum(0)
-        h_num.SetMaximum(1.3)
-        
-        h_num.Draw("EP2")
-        h_num.Draw("hist same")
-        
-        leg.Draw("same")
-        #CMS_lumi(c1, 4, 0, cmsText = 'CMS', extraText = ' Simulation', lumi_13TeV = '')
-
-        c1.SaveAs(f"{args.output_file}.png")
-        c1.SaveAs(f"{args.output_file}.pdf")
-        
