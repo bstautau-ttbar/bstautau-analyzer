@@ -159,7 +159,7 @@ btag_chwp   = {
     '2018' : {
         'emu'   : ('L',btag_wpval[btag_algo]['2018']['L']),
         'ee'    : ('L',btag_wpval[btag_algo]['2018']['L']),
-        'mmu'   : ('L',btag_wpval[btag_algo]['2018']['L']),
+        'mumu'  : ('L',btag_wpval[btag_algo]['2018']['L']),
         'e'     : ('L',btag_wpval[btag_algo]['2018']['L']),
         'mu'    : ('M',btag_wpval[btag_algo]['2018']['M']),
     }

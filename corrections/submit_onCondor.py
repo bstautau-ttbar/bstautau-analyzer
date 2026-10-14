@@ -158,7 +158,7 @@ if __name__ == "__main__":
         utils.logger.print_info(f"Output directory overridden to: {args.outdirectory}")
 
     jobtag = '_'.join(filter(None, [args.tag, datetime.datetime.now().strftime('%Y%m%d-%H%M%S')]))
-    FarmDirectory = os.path.join(THISDIR, f"jobLogs_corrections_{jobtag}")
+    FarmDirectory = os.path.join(THISDIR, f"condor_corrections_{jobtag}")
     os.makedirs(os.path.join(FarmDirectory, 'output'), exist_ok=True)
     os.makedirs(os.path.join(FarmDirectory, 'log'), exist_ok=True)
     utils.logger.print_info(f"Created farm directory: {FarmDirectory}")
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     os.system(f'chmod u+x {submitter_path}')
 
     if not args.submit:
-        utils.logger.print_info(f"DRYRUN: to submit the jobs, run: {submitter_path}")
+        utils.logger.print_info(f"DRYRUN: to submit the jobs, run: {os.path.relpath(submitter_path)}")
     else:
-        utils.logger.print_info(f"Submitting the jobs with: {submitter_path}")
+        utils.logger.print_info(f"Submitting the jobs with: {os.path.relpath(submitter_path)}")
         os.system(submitter_path)

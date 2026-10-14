@@ -27,7 +27,7 @@ object_sfs ={
             'file'    : '/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/latest/btagging.json.gz',
             'bc'      : 'UParTAK4_comb',
             'light'   : 'UParTAK4_light',
-            'eff'     : './sf_toolkit/sf_maps/btag_efficiency/{channel}_2018/btag-upartB_efficiency.root',
+            'eff'     : './sf_toolkit/sf_maps/btag_efficiency/emu_2018/btag-upartB_efficiency.root', # FIXME : compute channel by channel!
             'effname' : 'effj_btag{workingpoint}_{jetflavor}_tt_fullylep',
         },
     }

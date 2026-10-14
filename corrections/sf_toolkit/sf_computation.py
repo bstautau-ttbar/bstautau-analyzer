@@ -63,7 +63,7 @@ def compute_obj_sf(events, channel, year):
             new_branches["mu2_isosfDown"]  = cset_muiso.evaluate(np.abs(data_mu2['mu2_eta']), data_mu2['mu2_pt'], "systdown")
 
             new_branches    =   sf_utils.combine_insert_weight(new_branches, "mu_sf_weight", ["mu1_idsf", "mu1_isosf", "mu2_idsf", "mu2_isosf"])
-    elif channel in ['e']:
+    elif channel in ['e', 'ee']:
             new_branches["mu_sf_weight"]    =  np.ones(len(events), dtype=np.float64)
             weights.append("mu_sf_weight")
     
@@ -107,7 +107,7 @@ def compute_obj_sf(events, channel, year):
             new_branches    =   sf_utils.combine_insert_weight(new_branches, "e_sf_weight", ["e1_recosf", "e1_idsf", "e2_recosf", "e2_idsf"])
             weights.append("e_sf_weight")
     
-    elif channel in ['mu']:
+    elif channel in ['mu', 'mumu']:
             new_branches["e_sf_weight"]    =  np.ones(len(events), dtype=np.float64)
             weights.append("e_sf_weight")
 

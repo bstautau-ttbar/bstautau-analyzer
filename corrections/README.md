@@ -1,7 +1,8 @@
 # Preselection and MC correction for $Bs\to\tau\tau$
 
-In this step we apply the **preselction** based on the $t \bar t$ phase space and 
-the jet selection to select the b-tagged jets that could be intereesting for the analysiss.
+In this step we apply additional **preselction** based on the $t \bar t$ phase space, the jet selection for **b-tagged jets** that that will enter the next steps of the analysis. Also the main MC correction are applied:
+- [] muon scale factors (iso, ID)
+- ...
 
 ## Main usage: apply $t\bar t$ preselection and SF corrections
 The basic way to run the code is 
@@ -17,19 +18,25 @@ The main options are:
 | `--channels` | | `emu` | One or more decay channels to process. Supported channels: `mu`, `e`, `emu`, `mumu`, `ee` and space-separated list of any subset. |
 | `--outdirectory` | `-o` | from `.yml` | Output directory for corrected ntuples (overrides `.yml` value) |
 |`--mc_only`| | `False` | Skip data |
-|`--Nevents`| `-N` | `None` | MAX number of events to process. None: all events |
 | `--test_samples` | | `False` | Run on few samples : $t\bar t$ fullylep, semilep and $B_s\tau\tau$ signal. |
 | `--sample` | | `None` | Process only this single sample (MC key, e.g. `tt_fullylep`, or data key, e.g. `data_sm`). Used by `submit_onCondor.py` to split the production per-sample. |
+|`--Nevents`| `-N` | `None` | MAX number of events to process. None: all events |
 
 
-**Example:** running on a test production of custom-nanoAODv15 ntuples with ParT-tagger inference 
+**Example:** running on all channel on a test production of custom-nanoAODv15 ntuples with ParT-tagger and ParT regressed-mass inference
 ```bash
-python3 main.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --mc_only  --test_samples
+python3 main.py --input inputs/datamc_2018_UParTedge_tagMreg-v0.yml --channels emu mumu ee e mu --mc_only  --test_samples
 ``` 
+### Running on batch (HTCondor)
+The script [`submit_onCondor.py`](./submit_onCondor.py) submits `main.py` on HTCondor, one job per individual sample and per channel. Accepts the same `--input`, `--outdirectory`, `--channels`, `--mc_only`, `--test_samples`, `--Nevents` options as `main.py`, plus some related to the job scheduling and naming. 
+It creates a directory `condor_corrections_<tag>_<yyyymmdd-hhmmss>` containing the submission script and the jobs logs and output.
+Example:
+  ```bash
+  python3 submit_onCondor.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --submit
+  ```
 
-### Steps:
 
-
+## Important elements
 
 ### Input configuration file
 
@@ -47,9 +54,8 @@ common:
   year: 2018
   treename: Events
 ```
-
 `{channel}` is substituted at runtime with the channel being processed.
-See `inputs/datamc_TEMPLATE.yml` for a blank template and `inputs/datamc_2018_UParTedge-v0.yml` for a concrete example.
+See [`inputs/datamc_TEMPLATE.yml`](./inputs/datamc_TEMPLATE.yml) for a blank template and [`inputs/datamc_2018_UParTedge_tagMreg-v0.yml`](./inputs/datamc_2018_UParTedge_tagMreg-v0.yml) for a concrete example.
 
 <!---
 ## Processing pipeline
@@ -88,7 +94,3 @@ Output files are named `<sample>_wsfs.root` and written to the `outpath_template
 ## Additional scripts
 
 - **`genmatching.py`** — studies the efficiency of matching $B_s$ to b-tagged jets at generator level (CHS and PUPPI jets). Run with `--input` pointing to a signal ntuple.
-- **`submit_onCondor.py`** — submits `main.py` on HTCondor, one job per individual sample (and per channel). Accepts the same `--input`, `--outdirectory`, `--channels`, `--mc_only`, `--test_samples`, `--Nevents` options as `main.py`, plus `--tag` (Farm directory label), `--queue` (HTCondor `+JobFlavour`) and `--submit` (actually call `condor_submit`; omit for a dry-run). Example:
-  ```bash
-  python3 submit_onCondor.py --input inputs/datamc_2018_UParTedge-v0.yml --channels emu --submit
-  ```

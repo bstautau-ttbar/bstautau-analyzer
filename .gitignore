@@ -13,6 +13,8 @@ dist/
 
 # Text files
 *.log
+*.err
+*.out
 *.npy
 
 # Multimedia
@@ -30,7 +32,7 @@ dist/
 
 # condor
 *cbasile.cc
-jobLogs*/
+condor_*/
 
 # vscode cache
 *.vscode
