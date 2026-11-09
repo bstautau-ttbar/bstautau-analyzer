@@ -2,7 +2,7 @@
     - apply preselection and jet selection
     - apply SFs to the ntuples
 """
-import os, sys
+import os, sys, shutil
 import multiprocessing
 import numpy as np
 import argparse
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     
     channels   = args.channels
     year       = str(in_info.get('common', {}).get('year', 2018))
-    _testmode_ = args.test_samples
+    _test_mc_ = args.test_samples
     _mc_only_  = args.mc_only
     _sample_   = args.sample
     nevents    = args.Nevents
@@ -115,13 +115,15 @@ if __name__ == "__main__":
     tmp_outdir    = "/tmp" if _multit_ else "tmp_output" # temporary path for RDataFrame -> uproot
 
     used_mc_samples_names = data.samples.mc_samples_names
-    if (_testmode_):
+    if (_test_mc_):
         utils.logger.print_info(" TEST MODE ENABLED")
         used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
     if (_sample_):
         utils.logger.print_info(f" SINGLE-SAMPLE MODE: {_sample_}")
         used_mc_samples_names = [_sample_] if _sample_ in used_mc_samples_names else []
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
+
+    data_samples_names = data.samples.data_samples_names
     
     samples = dict()
     _tree_name = in_info.get('common', {}).get('treename', 'Events')
@@ -153,9 +155,8 @@ if __name__ == "__main__":
         samples[ch].update(mc_samples)
 
         # DATA
-        if not (_mc_only_ or _testmode_):
+        if not (_mc_only_ or _test_mc_):
             print(" ... loading DATA samples")
-            data_samples_names = data.samples.data_samples_names
             if (_sample_):
                 data_samples_names = {ch: [_sample_] if _sample_ in data_samples_names.get(ch, []) else []}
             data_samples, _ = data.ioutils.load_data_samples(
@@ -177,6 +178,9 @@ if __name__ == "__main__":
             samples[ch][name] = samples[ch][name].Define("entry_idx", "rdfentry_")
             _is_signal_ = 'bstautau' in name
             _is_data_   = 'data' in name
+            
+            tmp_outpath = os.path.join(tmp_outdir, f"tmp_{data.samples.files_names[name]}.root")
+            outpath     = os.path.join(tmp_outdir if not _multit_ else out_dir, f"{data.samples.files_names[name]}.root")
         
             # ---- SELECTIONS ----
             # TRIGGER selections (MC : OR of the requirements in data)
@@ -233,7 +237,6 @@ if __name__ == "__main__":
             utils.logger.print_info("[TMP] save temporary snapshot .....")
             if not os.path.exists(tmp_outdir):
                 os.makedirs(tmp_outdir)
-            tmp_outpath = os.path.join(tmp_outdir, f"tmp_{data.samples.files_names[name]}.root")
             samples[ch][name].Snapshot(_tree_name, tmp_outpath)
             if os.path.isfile(tmp_outpath):
                 utils.logger.print_info(f"[TMP] Saved processed sample to {tmp_outpath}")
@@ -241,6 +244,14 @@ if __name__ == "__main__":
                 utils.logger.print_error(f"[TMP] Failed to save processed sample to {tmp_outpath}")
                 sys.exit(1)
 
+            # --- DATA tmp snapshot is final output (no SFs to be applied) ---
+            if _is_data_:
+                utils.logger.print_info(f"[{name}] data sample: skipping SF computation")
+                shutil.move(tmp_outpath, outpath)  # works across filesystems (e.g. /tmp -> eos/afs)
+                utils.logger.print_success(f"[OUTPUT] Saved final processed sample to {outpath}")
+                continue
+            
+            # --- MC ---
             # reference: full entry_idx set + count from the RDF snapshot ---
             with uproot.open(tmp_outpath) as f:
                 tree = f[_tree_name]
@@ -250,9 +261,9 @@ if __name__ == "__main__":
             if n_events_in == 0:
                 print(f"[{name}] 0 events survive selection — skipping SF step, writing empty tree")
                 continue
+            
             # sanity: tmp output itself shouldn't have duplicates (defensive, cheap)
-            assert len(np.unique(entry_idx_in)) == n_events_in, \
-                f"[{name}] duplicate entry_idx already present in {tmp_outpath} before SF processing"
+            assert len(np.unique(entry_idx_in)) == n_events_in, f"[{name}] duplicate entry_idx already present in {tmp_outpath} before SF processing"
 
             # --- SF COMPUTATION (chunked) ---
             utils.logger.print_bold(f"\n--------- COMPUTE SCALE FACTORS ---------") 
@@ -314,13 +325,10 @@ if __name__ == "__main__":
                 raise RuntimeError(f"[{name}] duplicate entry_idx in {sfs_outpath} — a chunk was likely processed/written twice")
             utils.logger.print_success(f"[CHECK] {n_events_out} events consistent between {tmp_outpath} and {sfs_outpath}: no loss, no duplication")
 
+        
             # --- merge SFs into the main tree and save final snapshot ---
-            outpath  = os.path.join(tmp_outdir if not _multit_ else out_dir,
-                                    f"{data.samples.files_names[name]}.root")
-
-            # Disable MT for the final merge
-            if _multit_:
-                ROOT.DisableImplicitMT()
+        
+            if _multit_: ROOT.DisableImplicitMT() # Disable MT for the final merge
 
             sf_file  = ROOT.TFile.Open(sfs_outpath)
             sf_tree  = sf_file.Get(_tree_name)
@@ -334,9 +342,9 @@ if __name__ == "__main__":
             rdf_main = ROOT.RDataFrame(main_tree)
             rdf_main.Snapshot(_tree_name, outpath)
 
+            # clean up temporary files
             if os.path.isfile(outpath):
                 utils.logger.print_success(f"[OUTPUT] Saved final processed sample to {outpath}")
-                # clean up temporary files
                 os.remove(tmp_outpath)
                 os.remove(sfs_outpath)
                 utils.logger.print_info(f"[CLEANUP] Removed temporary files {tmp_outpath} and {sfs_outpath}")
@@ -344,9 +352,7 @@ if __name__ == "__main__":
                 utils.logger.print_error(f"[ERROR] Failed to save final processed sample to {outpath}")
                 sys.exit(1)
             
-            if _multit_:
-                ROOT.EnableImplicitMT(NTHREADS)  # restore for next sample
+            if _multit_: ROOT.EnableImplicitMT(NTHREADS)  # restore for next sample
     
-
     elapsed_time = time.time() - start_time
     utils.logger.print_bold(f"\n>>> DONE AFTER {elapsed_time//60:.0f}m {elapsed_time%60:.0f}s <<<")

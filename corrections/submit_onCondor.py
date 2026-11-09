@@ -1,5 +1,5 @@
 """
-    submit `main.py` on HTCondor, splitting the production into one job per sample
+    submit `main.py` on HTCondor: one submission per channel, queuing one job per sample
 """
 import os, sys
 import argparse
@@ -21,7 +21,7 @@ def parse_arguments():
     }
 
     parser = argparse.ArgumentParser(
-        description="Submit corrections/main.py on HTCondor, one job per sample",
+        description="Submit corrections/main.py on HTCondor, one job per sample queued per channel submission",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("--input", "-i",
@@ -39,6 +39,10 @@ def parse_arguments():
     parser.add_argument('--mc_only',
                         action='store_true',
                         help='process only MC samples (no data).'
+                        )
+    parser.add_argument('--data_only',
+                        action='store_true',
+                        help='process only DATA samples (no MC).'
                         )
     parser.add_argument('--test_samples',
                         action='store_true',
@@ -60,40 +64,48 @@ def parse_arguments():
                         action='store_true',
                         help='submit the jobs to HTCondor (default: dry-run, only create the Farm directory).'
                         )
-    return parser.parse_args()
+    
+    args = parser.parse_args()
+    if args.mc_only and args.data_only:
+        utils.logger.print_error("conflicting --mc_only and --data_only, chose one. EXIT")
+        sys.exit(1)
+    return args
 
 
-def samples_for_channel(ch, test_samples, mc_only):
+def samples_for_channel(ch, test_samples, mc_only, data_only):
     """ return the list of (sample_name, is_data) to process for one channel """
-
-    mc_names = data.samples.mc_samples_names
+    
+    
     if test_samples:
-        mc_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
+       return [('tt_fullylep', False), ('tt_semilep', False), ('tt_had', False), ('bstautau', False)]
+    mc_samples   =  [(name, False) for name in data.samples.mc_samples_names]
+    data_samples = [(name, True) for name in data.samples.data_samples_names.get(ch, [])]
 
-    samples_ = [(name, False) for name in mc_names]
-    if not (mc_only or test_samples):
-        samples_ += [(name, True) for name in data.samples.data_samples_names.get(ch, [])]
+    if mc_only: return mc_samples
+    if data_only : return data_samples
 
-    return samples_
+    return mc_samples + data_samples
 
 
-def build_condor_job(args, FarmDirectory, ch, sample_name):
-    """ build the worker script and condor submission file to run main.py on a single sample """
+def build_condor_job(args, FarmDirectory, ch, samples):
+    """ build one generic worker script for the channel (takes the sample name as $1)
+        and one condor submission file that queues one job per sample, all sharing
+        the same executable and batch name """
 
-    jobname = f"{sample_name}_{ch}"
+    jobname = ch
 
     # main.py only enables ROOT implicit-MT when running on >10k events (see setup_multithreading());
     # request enough CPUs for the job's cgroup to let TBB actually use multiple threads in that case.
     request_cpus = 4 if (args.Nevents is None or args.Nevents > 10000) else 1
 
-    cmd_parts = ["python3", "main.py", "--input", args.input, "--channels", ch, "--sample", sample_name]
+    cmd_parts = ["python3", "main.py", "--input", args.input, "--channels", ch, "--sample", "$1"]
     if args.outdirectory:
         cmd_parts += ["--outdirectory", args.outdirectory]
     if args.Nevents:
         cmd_parts += ["-N", str(args.Nevents)]
     cmd = " ".join(cmd_parts)
 
-    # ---- worker script to execute -----
+    # ---- worker script to execute: $1 is the sample name -----
     worker_path = os.path.join(FarmDirectory, f"worker_{jobname}.sh")
     with open(worker_path, 'w') as worker:
         worker.write(f'''#!/bin/bash
@@ -105,7 +117,7 @@ cd {CMSSW_BASE}/src/bstautau-analyzer/
 pip3 install -e .
 cd {THISDIR}
 
-echo "INFO: run corrections on sample {sample_name} ({ch})"
+echo "INFO: run corrections on sample $1 ({ch})"
 echo "{cmd}"
 {cmd}
 
@@ -113,15 +125,18 @@ echo ------- END JOB :  `date`
 ''')
     os.system(f'chmod u+x {worker_path}')
 
-    # ---- condor submission file -----
+    # ---- condor submission file: one job queued per sample -----
+    sample_names = [name for name, is_data in samples]
+    queue_list = "\n".join(sample_names)
     condor_path = os.path.join(FarmDirectory, f"condorsub_{jobname}.sub")
     with open(condor_path, 'w') as condor:
         condor.write(f'''
 executable = {worker_path}
+arguments  = $(sample)
 
-output     = {FarmDirectory}/output/{jobname}.out
-error      = {FarmDirectory}/output/{jobname}.err
-log        = {FarmDirectory}/log/{jobname}.log
+output     = {FarmDirectory}/output/{jobname}_$(sample).out
+error      = {FarmDirectory}/output/{jobname}_$(sample).err
+log        = {FarmDirectory}/log/{jobname}_$(sample).log
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT_OR_EVICT
@@ -133,7 +148,9 @@ request_cpus = {request_cpus}
 +AccountingGroup = "group_u_CMST3.all"
 +SingularityImage = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/el8:x86_64"
 
-queue 1
+queue sample from (
+{queue_list}
+)
 ''')
 
     return condor_path
@@ -166,13 +183,14 @@ if __name__ == "__main__":
     condorfiles = []
     for ch in args.channels:
         utils.logger.print_bold(f"\n--------- CHANNEL {ch} ---------")
-        for sample_name, is_data in samples_for_channel(ch, args.test_samples, args.mc_only):
+        samples = samples_for_channel(ch, args.test_samples, args.mc_only, args.data_only)
+        for sample_name, is_data in samples:
             utils.logger.print_addition(f"{sample_name} ({'data' if is_data else 'MC'})")
-            condor_path = build_condor_job(args, FarmDirectory, ch, sample_name)
-            condorfiles.append(condor_path)
+        condor_path = build_condor_job(args, FarmDirectory, ch, samples)
+        condorfiles.append(condor_path)
 
     print("--"*20+"\n")
-    utils.logger.print_success(f"prepared {len(condorfiles)} condor jobs")
+    utils.logger.print_success(f"prepared {len(condorfiles)} condor submissions (one per channel)")
 
     # submitter script to submit all the jobs
     submitter_path = os.path.join(FarmDirectory, 'submitter.sh')
