@@ -19,15 +19,15 @@ if __name__ == "__main__":
     
     year = str(2018)
     ch = 'emu'
-    used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
+    used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau']
     signal_factor = 20 # multiply signal for plotting
-    outdir = "/eos/user/c/cbasile/www/BsTauTau-ttbar/tagger/diTau_tagMreg-v0/cutbase_wp/{channel}_{year}".format(channel=ch, year=year)
+    outdir = "tmp_out"#"/eos/user/c/cbasile/www/BsTauTau-ttbar/tagger/diTau_tagMreg-v0/cutbase_wp/{channel}_{year}".format(channel=ch, year=year)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
 
     mc_samples = data.ioutils.load_mc_samples(
-        '/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_2018_test_tagMregV0/sfs_applied'.format(channel=ch),
+        '/eos/cms/store/group/phys_bphys/cbasile/BsTauTau-ttbar/nanov15_skim/{channel}_{year}_tagMreg-v0/sfs_applied'.format(channel=ch, year=year),
         used_mc_samples_names,
         year,
         data.samples.files_names,
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     tagger_thresholds = {
         f'{anajet_branch}_part_all_sig_frac' : {
             'ref_var_label' : "#tau_{h}#tau_{x} score fraction",
-            'thresholds': np.linspace(0.1, 0.9, 17).tolist(),
+            'thresholds': [0.1, 0.9],#np.linspace(0.1, 0.9, 17).tolist(),
             'side': '>',
             'test_var' : f'{anajet_branch}_ParTRegMass',
             'test_var_label' : "m_{j}^{UParT}",
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         },
         f'{anajet_branch}_ParTRegMass' : {
             'ref_var_label' : "m_{j}^{UParT}",
-            'thresholds': np.linspace(2.0, 17., 31).tolist(),
+            'thresholds': [3, 10],#np.linspace(2.0, 17., 31).tolist(),
             'side': '<',
             'test_var' : f'{anajet_branch}_part_all_sig_frac',
             'test_var_label' : "#tau_{h}#tau_{x} score fraction",
@@ -64,17 +64,44 @@ if __name__ == "__main__":
         for th in params['thresholds']:
             histos[f'{cutvar}_{th:.2f}'] = dict()
 
+    # ----- 2D: discriminant score fraction (x) VS regressed mass (y), no tagger cut -----
+    mass_var   = f'{anajet_branch}_ParTRegMass'
+    mass_label = "m_{j}^{UParT}"
+    discriminant_vars = {
+        f'{anajet_branch}_part_all_sig_frac'    : "#tau_{h}#tau_{x} score fraction",
+        f'{anajet_branch}_ParTRawTauhtauh_frac' : "D#tau_{h}",
+        f'{anajet_branch}_ParTRawTauhtaumu_frac': "D#tau_{#mu}",
+        f'{anajet_branch}_ParTRawTauhtaue_frac' : "D#tau_{e}",
+    }
+    # per-channel discriminants are filled only for jets whose max tau score is that channel
+    # (i.e. jets classified as tauhtaux by define_jet_class_mask()); part_all_sig_frac has no such restriction
+    tau_class_index = {f'{anajet_branch}_{tau}_frac': i for i, tau in enumerate(tau_scores)}
+    class_mask_var = f'{anajet_branch}_part_class_mask'
+    templates_2d = {
+        xvar: ROOT.RDF.TH2DModel(f'h2_{xvar}_vs_{mass_var}', "",
+                                 20, 0, 1.,    # discriminant fraction
+                                 100, 0, 50)   # m_j^{UParT}
+        for xvar in discriminant_vars
+    }
+    histos_2d = {xvar: dict() for xvar in discriminant_vars}
+
     print(f"\n------ PREPARE PLOTS ------")   
     for name, rdf in mc_samples.items():
         print(f"\n------ {name} ------")
         _is_bstautau_ = 'bstautau' in name
 
         # define tagger combined scores
-        mc_samples[name] = utagger.part_scores_functions.define_combined_scores(mc_samples[name], 
+        mc_samples[name] = utagger.part_scores_functions.define_combined_scores(mc_samples[name],
                                                                                 anajet_branch,
-                                                                                tau_scores, parT_scores, bkg_scores, 
+                                                                                tau_scores, parT_scores, bkg_scores,
                                                                                 is_bstautau=False, #'bstautau' in name, # FIXME: adjust mask
                                                                                 bstautau_masks=None
+                                                                                )
+        # define per-jet class mask: which tauhtaux score is the largest
+        mc_samples[name] = utagger.part_scores_functions.define_jet_class_mask(mc_samples[name],
+                                                                                anajet_branch,
+                                                                                tau_scores, bkg_scores,
+                                                                                mask_name=class_mask_var
                                                                                 )
 
         for cutvar, params in tagger_thresholds.items():
@@ -85,6 +112,18 @@ if __name__ == "__main__":
                 if _is_bstautau_ : mask_expr = f"{mask_expr} && ({anajet_branch}_signalBs_mask)"
 
                 histos[f'{cutvar}_{th:.2f}'][name] = mc_samples[name].Define('mask', mask_expr).Define('sel_jets', f"{xvar}[mask]").Histo1D(params['template'], 'sel_jets', 'norm_weight')
+
+        # book 2D histograms (x = discriminant fraction, y = regressed mass), filled in the same event loop as the 1D ones
+        mask2d_expr = f"({anajet_branch}_signalBs_mask)" if _is_bstautau_ else f"ROOT::RVecB({mass_var}.size(), true)"
+        for xvar in discriminant_vars:
+            class_idx = tau_class_index.get(xvar)
+            xvar_mask_expr = mask2d_expr if class_idx is None else f"({mask2d_expr}) && ({class_mask_var} == {class_idx})"
+            histos_2d[xvar][name] = (mc_samples[name]
+                               .Define('mask2d', xvar_mask_expr)
+                               .Define('m2d_x', f"{xvar}[mask2d]")
+                               .Define('m2d_y', f"{mass_var}[mask2d]")
+                               .Define('m2d_w', "ROOT::RVecD(m2d_x.size(), norm_weight)")  # per-jet copy of the event weight
+                               .Histo2D(templates_2d[xvar], 'm2d_x', 'm2d_y', 'm2d_w'))
 
     # ----- PLOTTING -----
     print(f"\n------ PLOTTING ------")
@@ -221,6 +260,51 @@ if __name__ == "__main__":
         basename = os.path.join(outdir, f"summary_{cutvar}")
         c_summary.SaveAs(f"{basename}.png")
         c_summary.SaveAs(f"{basename}.pdf")
-        
+
     # < loop over cutvar
-        
+
+    # ----- 2D plots: discriminant score fraction VS m_j^{UParT} -----
+    print(f"\n------ 2D PLOTS ------")
+    for xvar, x_label in discriminant_vars.items():
+        sig_2d, bkg_2d = None, None
+        for name, h2 in histos_2d[xvar].items():
+            h = h2.GetValue()
+            if 'bstautau' in name:
+                if sig_2d is None: sig_2d = h.Clone(f"h2_sig_{xvar}_vs_{mass_var}")
+                else:              sig_2d.Add(h)
+            else:
+                if bkg_2d is None: bkg_2d = h.Clone(f"h2_bkg_{xvar}_vs_{mass_var}")
+                else:              bkg_2d.Add(h)
+
+        # per-bin S/sqrt(S+B)
+        signif_2d = sig_2d.Clone(f"h2_sOverSqrtSB_{xvar}_vs_{mass_var}")
+        signif_2d.Reset()
+        for ix in range(1, sig_2d.GetNbinsX() + 1):
+            for iy in range(1, sig_2d.GetNbinsY() + 1):
+                s = sig_2d.GetBinContent(ix, iy)
+                b = bkg_2d.GetBinContent(ix, iy)
+                signif_2d.SetBinContent(ix, iy, s / (s + b) ** 0.5 if (s + b) > 0 else 0.)
+
+        plots_2d = {
+            'sig'          : (sig_2d,    "Bs#rightarrow#tau_{h}#tau_{x}", "Jets"),
+            'bkg'          : (bkg_2d,    "t#bar{t}",                       "Jets"),
+            'sOverSqrtSB'  : (signif_2d, "per-bin S/#sqrt{S+B}",           "S/#sqrt{S+B}"),
+        }
+        for tag, (h, label, z_label) in plots_2d.items():
+            h.SetTitle(f";{x_label};{mass_label};{z_label}")
+            h.GetYaxis().SetTitleOffset(0.9)
+            h.GetZaxis().SetTitleOffset(1.3)
+
+            c2 = ROOT.TCanvas(f"c2d_{xvar}_{tag}", "", 1000, 850)
+            c2.SetRightMargin(0.17)
+            c2.SetLeftMargin(0.14)
+            if tag != 'sOverSqrtSB': c2.SetLogz()
+            h.Draw("COLZ")
+
+            info_text.SetTextAlign(33)
+            info_text.DrawLatex(0.80, 0.88, f"{ch} {year}")
+            info_text.DrawLatex(0.80, 0.83, label)
+
+            basename = os.path.join(outdir, f"2D_{xvar}_vs_{mass_var}_{tag}")
+            c2.SaveAs(f"{basename}.png")
+            c2.SaveAs(f"{basename}.pdf")
