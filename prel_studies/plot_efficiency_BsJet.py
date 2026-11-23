@@ -31,6 +31,14 @@ def get_arguments() :
                            help='Configuration file')
     return argparser.parse_args()
 
+def norm_hist(histo, target_norm = 1.):
+
+    for i in range(1, histo.GetNbinsX()+1):
+        yi = histo.GetBinContent(i)/histo.GetBinWidth(i)
+        histo.SetBinContent(i, yi)
+    histo.Scale(target_norm/histo.Integral())
+    return histo
+
 def style_efficiency(graph, color=ROOT.kBlue, marker=20):
     graph.SetLineColor(color)
     graph.SetMarkerColor(color)
@@ -79,6 +87,7 @@ if __name__ == "__main__":
     compare = config.get('compare', None)
     ref2d     = config.get('ref2d', None)
     compare2d = config.get('compare2d', None)
+    histocfg   = config.get('histo', {})
     extraText = config.get('extraText', None)
     
     # input files
@@ -95,6 +104,68 @@ if __name__ == "__main__":
     for text in extraText:
         cms.AppendAdditionalInfo(text)
     print("---"*10+"\n")
+    
+    # --- 1D histo ---
+    for outname, clist in histocfg.items():
+        print(f"> {outname}")
+
+        # legend
+        legend = ROOT.TLegend(0.45, 0.75, 0.9, 0.9)
+        legend.SetBorderSize(0)
+        legend.SetFillStyle(0)
+        legend.SetTextFont(42)
+        legend.SetTextSize(0.032)
+        
+        x_lo, x_hi = 0, 100
+        y_lo, y_hi = 0, -1.
+
+        tokeep = [] # keep alive
+        i = 0
+        for h_cfg in clist:
+            hname   = h_cfg[0]
+            index   = h_cfg[2]
+            file    = files[index]
+            label   = ' '.join([labels[index], h_cfg[1]])
+            print(f"   - {label} {h_cfg[1]}")
+            
+            f = ROOT.TFile(file)
+            h = f.Get(hname)
+            if not h : continue
+            h = norm_hist(h)
+            x_lo, x_hi = h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax()
+            y_lo, y_hi = 0, max(y_hi, 1.4*h.GetMaximum())
+
+            tokeep.append(h)
+            i += 1
+        
+        if len(tokeep) == 0 : continue
+        canv = cms.cmsCanvas(f'c_{outname}', 
+                             x_lo, x_hi, y_lo, y_hi, 
+                             tokeep[0].GetXaxis().GetTitle(), '',
+                             square=False, 
+                             extraSpace=0.0, iPos=11
+                            )
+
+        canv.cd()
+        for i, h in enumerate(tokeep):
+            color = palette[i]
+            cms.cmsDraw(h, "hist",
+                        marker = 0,
+                        msize  = 0,
+                        mcolor = color,
+                        lcolor = color,
+                        lwidth = 2,
+                        lstyle = ROOT.kSolid,
+                        fstyle = 3004,
+                        fcolor = color
+            ) 
+        
+        legend.Draw()
+        canv.SaveAs(os.path.join(outdir, f"{outname}.png"))
+        canv.SaveAs(os.path.join(outdir, f"{outname}.pdf"))
+        
+            
+    # --- efficiency (1D) ---
     for outname, clist in compare.items():
         # legend
         legend = ROOT.TLegend(0.45, 0.75, 0.9, 0.9)
@@ -111,7 +182,7 @@ if __name__ == "__main__":
             index   = h_cfg[2]
             file    = files[index]
             label   = ' '.join([labels[index], h_cfg[1]])
-            print(f"   - {label} {h_cfg[1]} : {file}")
+            print(f"   - {label} {h_cfg[1]}")
             
             f = ROOT.TFile(file)
             h_den = f.Get(ref)
@@ -156,12 +227,13 @@ if __name__ == "__main__":
         legend.Draw()
         canv.SaveAs(os.path.join(outdir, f"efficiency_{outname}.png"))
         canv.SaveAs(os.path.join(outdir, f"efficiency_{outname}.pdf"))
-
+    
+    # --- efficiency (2D) ---
     if compare2d:
         print("---"*10+"\n")
         for outname, h_cfg in compare2d.items():
             hname = h_cfg[0]
             index = h_cfg[1]
             file  = files[index]
-            print(f"   - 2D {outname} : {hname} from {file}")
+            print(f"   - 2D {outname} : {hname}")
             plot_2d_efficiency(file, hname, ref2d, outname, outdir)

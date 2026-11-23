@@ -1,6 +1,6 @@
 {
     "infiles": [
-        "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/efficiency_Bs-puppiAk4_nanoAODv15.root"
+        "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/nanoAODv15/topology-b2gNov26.root"
     ],
     "labels": [
         "ak4PUPPI"
@@ -22,5 +22,9 @@
         "matched_Bs"              : ["h2_matched_Bs", 0],
         "matched_Bs_btagUParTL"   : ["h2_matched_Bs_btagUParTL", 0],
         "matched_Bs_btagUParTM"   : ["h2_matched_Bs_btagUParTM", 0]
+    },
+    "histo" : {
+        "jet_pt"        : [["matched_jet_pt", "", 0]],
+        "Bs_jet_dR"     : [["matched_jet_dr", "", 0]]
     }
 }

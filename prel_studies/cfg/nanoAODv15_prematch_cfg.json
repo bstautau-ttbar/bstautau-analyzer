@@ -1,0 +1,23 @@
+{
+    "infiles": [
+        "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/nanoAODv15/topology-b2gNov26.root"
+    ],
+    "labels": [
+        "ak4PUPPI"
+    ],
+    "outdir": "/eos/user/c/cbasile/www/BsTauTau-ttbar/studies/PuppiAK4-jets/nanoAODv15/",
+    "ref" : "h_all_Bs",
+    "extraText": [
+        "Bs#rightarrow#tau_{h}#tau_{x}"
+    ],
+    "compare": {
+    },
+    "ref2d" : "h2_all_Bs",
+    "compare2d": {  
+    },
+    "histo" : {
+        "Bs_gen_pt"     : [["h_all_Bs", "", 0]], 
+        "Tau_gen_pt"    : [["gen_tau_pt", "", 0]],
+        "diTau_dR"      : [["gen_ditau_dr", "", 0]]
+    }
+}
