@@ -161,7 +161,7 @@ if __name__ == '__main__':
     used_mc_samples_names = data.samples.mc_samples_names
     if (_testmode_):
         utils.logger.print_info("TEST MODE: only processing a subset of MC samples for quick testing")
-        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau', 'bstautauext']
+        used_mc_samples_names = ['tt_fullylep', 'tt_semilep', 'tt_had', 'bstautau']
     
     print(f" > Processing {len(used_mc_samples_names)} MC samples for channels {channels}: {used_mc_samples_names}")
 
@@ -173,9 +173,8 @@ if __name__ == '__main__':
         datetime.now().strftime('%d%b%Y_%Hh%Mm%Ss')
         ]))
     out_dir        = out_dir_base.format(year=year, label=label)
-    hitsos_to_plot = htools.histos_config.histo_testmode  #htools.histos_baseline.histos_test if test_histos else htools.histos_baseline.histos
-    if make_histos:
-        htools.io.make_directories_for_plots(out_dir, channels, flavor_based=flavor)
+    histos_to_plot = htools.histos_config.histo_testmode if test_histos else htools.histos_config.histo_baseline
+    #    htools.io.make_directories_for_plots(out_dir, channels, flavor_based=flavor)
 
     samples   = dict()
     tree_name = in_info.get('common', {}).get('treename', 'Events')
@@ -203,7 +202,7 @@ if __name__ == '__main__':
         # DATA (to be checked)
         if not (mc_only or _testmode_):
             print("-- loading DATA samples --")
-            data.ioutils.load_data_samples(
+            data_samples, _ = data.ioutils.load_data_samples(
                 tree_dir,
                 ch,
                 data.samples.data_samples_names,
@@ -211,7 +210,9 @@ if __name__ == '__main__':
                 data.samples.files_names,
                 tree_name,
                 nevents = nevents,
+                spliteras=False
             )
+            samples[ch].update(data_samples)
         else :
             utils.logger.print_warning(" MC ONLY mode enabled, skipping data samples")
         
@@ -239,13 +240,6 @@ if __name__ == '__main__':
             else:
                 bstautau_conditions = None
 
-            #samples[ch][name]     =  data.defutils.define_jets_with_btagging_selection_for_histos(samples[ch][name], part_samples=part_samples, plot_all_jets=plot_all_jets)
-            # select jets for the analysis # N.B. moved to corrections step.
-            #samples[ch][name] =  data.defutils.define_jets_for_analysis(samples[ch][name], jet_branch, 
-            #                                                            gen_matching_condition = bstautau_conditions['general'] if _is_bstautau_ else None, 
-            #                                                            all_jets = plot_all_jets
-            #                                                            )
-            
             samples[ch][name] = tagger.part_scores_functions.define_combined_scores(samples[ch][name], 
                                                                                     f'{jet_branch}_for_histo', 
                                                                                     tau_scores, parT_scores, bkg_scores, 
@@ -268,8 +262,6 @@ if __name__ == '__main__':
                                                                                 tau_scores,
                                                                                 f'{jet_branch}_for_histo_part_class_mask')
             
-            #histos[ch] = {}  # Clear regular histos
-            #histos[ch].update(histos_part_selections)  # Only add sequential cuts histos
                 
             if False: # FIXME: commented for the moment need to be reimplemented properly
                 histos_flavor[ch] = {}  # Clear regular flavor histos
@@ -294,48 +286,30 @@ if __name__ == '__main__':
             if _testmode_ and (nevents is not None):
                 os.makedirs(f"tmp_out/{ch}", exist_ok=True)
                 samples[ch][name].Snapshot(tree_name, f"tmp_out/{ch}/{name}_snapshot.root")
-                utils.logger.print_info(f" SAVED snapshot : tmp_out/{ch}/{name}_snapshot.root")
-        
-        
-        
+                utils.logger.print_info(f" SAVED snapshot : tmp_out/{ch}/{name}_snapshot.root")  
         # -- end loop on samples
+        
         if not make_histos: 
             utils.logger.print_warning("Dry-run mode enabled, skipping histogram creation and plotting")
             continue
         utils.logger.print_bold(f"\n-- PLOTTING --")
         print(" > creating histogram definitions ...")
-        
-        # initialize all histogram definitions BEFORE processing (lazy setup)
-        temp_hists = None
-        temp_flavor_hists = None
-        print(" > sample-based ")
-        temp_hists = htools.plotting_kit.initialize_histograms(hitsos_to_plot[ch], samples[ch], norm_weight='tot_weight')
-        
-        if not temp_hists:
-            utils.logger.print_error(f" In histogram initialization for channel {ch}. SKIPPING...")
-            continue
-        
-        if flavor: # N.B. not checked yet!
-            print(" > flavor-based ")
-            temp_flavor_hists = htools.plotting_flavourbased_utils.initialize_flavor_histograms(hitsos_to_plot, samples, ch)
 
-        # actually process the histograms and produce the plots
-        print(" > plotting histograms ...")
-        c1, main_pad, ratio_pad = htools.plotting_utils.create_canvas_with_pads()
-        htools.plotting_kit.process_histograms(
-            hitsos_to_plot[ch], temp_hists, 
-            samples, ch, 
-            data.samples.colours, 
-            out_dir, 
-            data.samples.titles, 
-            main_pad, ratio_pad, c1, 
-            blinddata, 
-            mconly=mc_only
+        plotter = htools.plotting_kit.plotting_kit(
+            config_hists=histos_to_plot[ch],
+            datamc_samples=samples[ch],
+            ttbar_ch=ch,
+            year=year,
+            weight_branch='tot_weight',
+            output_dir=out_dir,
+            flavor_based=flavor,
+            debug=False
         )
+        #plotter.set_blinding(blinddata)
+        plotter.set_mc_only(mc_only)
 
-        if flavor and temp_flavor_hists:
-            htools.plotting_flavourbased_utils.process_flavor_histograms(hitsos_to_plot, temp_flavor_hists, ch, out_dir, main_pad, ratio_pad, c1, data.samples.colours, blinddata)
-
+        plotter.run()
+        
         print("-------- DONE --------")
     # end of channel loop
     

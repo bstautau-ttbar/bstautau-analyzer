@@ -1,563 +1,453 @@
 import ROOT
-import math
-from .cmsstyle import CMS_lumi #FIXME hardcoded year
-from .officialStyle import officialStyle
-from blinding_utils import apply_data_blinding_to_histogram, should_apply_blinding
+import math, os, sys
 
-officialStyle(ROOT.gStyle, ROOT.TGaxis)
+import data_toolkit as data
 
-# ----------------- UTILITY FUNCTIONS -----------------
-def create_canvas_with_pads(): #FIXME use central CMSSTYLE
-    """
-    Creates a ROOT canvas with two pads: a main pad and a ratio pad.
+from . import bstautau_cmsstyle as cms
+
+_cms_style_ready = False
+
+"""
+    plotting_kit class
+"""
+
+class plotting_kit:
     
-    Returns:
-        tuple: A tuple containing the canvas, main pad, and ratio pad.
-    """
-    # Create the canvas
-    c1 = ROOT.TCanvas('c1', '', 700, 700)
-    c1.Draw()
+    config_hists    = dict() # (dict): dictionary <name>: (<branch_name>, <selection_string>, <isJet_based(bool)>, <h_model(ROOT.RDF.TH1DModel)>, <xlabel>, <logscale>)   
+    temp_hists      = dict() # torage for histogram outlines
     
-    # Create the main pad
-    c1.cd()
-    main_pad = ROOT.TPad('main_pad', '', 0., 0.25, 1., 1.)
-    main_pad.Draw()
-    main_pad.SetTicks(True)
-    main_pad.SetBottomMargin(0.)
+    samples         = dict() # storage for RDataFrames
+    colours         = data.samples.colours
+    titles          = data.samples.titles
+
+    year            = 2018 
+    channel         = None
+    signal_scale    = 50.
+    #mc_lumi_scale   = {'emu' : 0.89, 'ee' : 0.47, 'mumu': 1., 'e' : 0.47, 'mu' : 1. }  # DIRTY: apply scale to MC to match the lumi in processed data
+    mc_lumi_scale   = {'emu' : 0.95, 'ee' : 1.0, 'mumu': 1., 'e' : 1.0, 'mu' : 1.0 }  # DIRTY: apply scale to MC to match the lumi in processed data
+
+    y_headroom_lin  = 1.5   # multiply the peak bin by this for a linear-scale frame
+    y_headroom_log  = 100.  # log scale needs decades of headroom, not a percentage
+
+    weight_branch   = 'tot_weight'
+
+    blinding        = {# hname : (blinded interval)
+        'j_tauhtauh_incl'   : [0.6, 1.0],
+        'j_tauhtaue_incl'   : [0.6, 1.0],
+        'j_tauhtaumu_incl'  : [0.6, 1.0],
+        'j_tauhtauh_SR'     : [0.0, 1.0],
+        'j_tauhtaue_SR'     : [0.0, 1.0],
+        'j_tauhtaumu_SR'    : [0.0, 1.0],
+        #'j_tauhtauh_CR'     : [0.6, 1.0],
+        #'j_tauhtaue_CR'     : [0.6, 1.0],
+        #'j_tauhtaumu_CR'    : [0.6, 1.0],
+        'j_Mreg'            : [0.,  5.]
+    }
+
+    output_dir       = './plots'
+    _out_yscale      = ['log', 'lin']
+    _out_formats     = ['png', 'pdf', 'C', 'root']
     
-    # Create the ratio pad
-    c1.cd()
-    ratio_pad = ROOT.TPad('ratio_pad', '', 0., 0., 1., 0.25)
-    ratio_pad.Draw()
-    ratio_pad.SetTopMargin(0.)
-    ratio_pad.SetGridy()
-    ratio_pad.SetBottomMargin(0.45)
+    _mc_only        = False
+    _flavor_based   = False
+    _debug          = False
     
-    return c1, main_pad, ratio_pad
-
-def set_histogram_style(hist, x_title, y_title, fill_color, line_color):
-    hist.GetXaxis().SetTitle(x_title)
-    hist.GetYaxis().SetTitle(y_title)
-    hist.SetFillColor(fill_color)
-    hist.SetLineColor(line_color)
-
-def create_legend(temp_hists, samples_for_legend, titles):
-    leg = ROOT.TLegend(0.24,.67,.95,.90)
-    leg.SetBorderSize(0)
-    leg.SetFillColor(0)
-    leg.SetFillStyle(0)
-    leg.SetTextFont(42)
-    leg.SetTextSize(0.035)
-    leg.SetNColumns(3)
-    k = list(temp_hists.keys())[0]
-    for kk in samples_for_legend:
-        leg.AddEntry(
-            temp_hists[k]['%s_%s' %(k, kk)].GetValue(), 
-            titles[kk], 
-            'EP' if 'data' in kk else ('L' if 'bstautau' in kk else 'F')
-        )
-
-    return leg
-
-# ----------- PROCESSING HISTOGRAMS AND PLOTTING ----------------
-# FIXME don't need the channel to pass explicitly
-def initialize_histograms(histos, samples, norm_weight = 'tot_weight'):
-    """
-        Initialize the histograms for a set of samples
-        Args:
-            histos (dict): dictionary <name>: (<branch_name>, <selection_string>, <isJet_based(bool)>, <h_model(ROOT.RDF.TH1DModel)>, <xlabel>, <logscale>)
-            samples (dict): dictionary <sample_name>: <RDataFrame>
-            norm_weight (str): branch name for the normalization weight to be applied to the histograms. Default is 'tot_weight'
-
-        Returns:
-            dict: A dictionary containing the initialized histograms for each variable and sample. "xvar" : { "sample_name" : TH1D, ... }
-    """
-    temp_hists   = {}
-    # loop on histograms templates
-    for hname, hinfo in histos.items():
-        temp_hists[hname] = {}
-        branch_name, selection, isjet_based, h_model, xlabel, logscale = hinfo
-        # loop on samples
-        for sname, srdf in samples.items():
-            print(f' {hname} -- {sname}')
-            if selection == '(1)':
-                temp_hists[hname][f'{hname}_{sname}'] = srdf.Histo1D(h_model, branch_name, norm_weight)
-            else:
-                if isjet_based:
-                    temp_hists[hname][f'{hname}_{sname}'] = srdf.Define(f'{branch_name}_toplot', f'{branch_name}[{selection}]').Histo1D(h_model, f'{branch_name}_toplot', norm_weight)
-                else: #event-based
-                    temp_hists[hname][f'{hname}_{sname}'] = srdf.Filter(selection).Histo1D(h_model, branch_name, norm_weight)
-        print(temp_hists)
-    return temp_hists
-
-def merge_histograms(temp_hists):
     
-    used_samples = []
-    new_temp_hists = dict()
-    for xvar, hdict in temp_hists.items():
-        new_temp_hists[xvar] = {}
-        for hname, hist in hdict.items():
-            if hname in used_samples: continue
-        
-            print(f' {xvar} -- {hname}')
-            tmp_hist = hist.GetValue().Clone()
-            print(f'  integral before merging: {tmp_hist.Integral()}')
-            # look for extension samples
-            for hnameext, histext in hdict.items():
-                if (hname in hnameext) and ('ext' in hnameext):
-                    print(f' {xvar} -- {hname} + {hnameext}')
-                    tmp_hist.Add(histext.GetValue())
-                    print(f'  + integral: {histext.GetValue().Integral()}')
-                    used_samples.append(hnameext)
-            
-            used_samples.append(hname)
-            print(f'  integral after merging: {tmp_hist.Integral()}')
-            new_temp_hists[xvar][hname] = tmp_hist
-    
-    return new_temp_hists
+    def __init__(self, config_hists, datamc_samples, ttbar_ch, year, weight_branch='tot_weight', output_dir='./plots', flavor_based=False, debug=False):
+        self.config_hists   = config_hists
+        self.temp_hists     = {}
+        self.samples        = datamc_samples
+        self.channel        = ttbar_ch
+        self.year           = year
+        self.weight_branch  = weight_branch
+        self.output_dir     = output_dir
+        self._mc_only       = False
+        self._flavor_based  = flavor_based
+        self._debug         = debug
+        self._root_file      = None
+        self._channel_folder = None
 
+        # initialize cmsstyle once per process
+        global _cms_style_ready
+        if not _cms_style_ready:
+            cms.setCMSStyle()
+            _cms_style_ready = True
+        ROOT.TGaxis.SetMaxDigits(3)  # Y-axis labels switch to scientific notation above 1e3
 
-def compute_ratio_plot(temp_hists, ratio, stats, ratio_pad):
-    ratio_pad.cd()
-    ratio_stats = stats.Clone()
-    ratio_stats.SetName(ratio.GetName()+'_ratiostats')
-    ratio_stats.Divide(stats)
-    ratio_stats.SetMaximum(1.19999) # avoid displaying 2, that overlaps with 0 in the main_pad
-    ratio_stats.SetMinimum(0.79999) # and this is for symmetry
-    ratio_stats.GetYaxis().SetTitle('obs/exp')
-    ratio_stats.GetYaxis().SetTitleOffset(0.5)
-    ratio_stats.GetYaxis().SetNdivisions(405)
-    ratio_stats.GetXaxis().SetLabelSize(3.* ratio.GetXaxis().GetLabelSize())
-    ratio_stats.GetYaxis().SetLabelSize(3.* ratio.GetYaxis().GetLabelSize())
-    ratio_stats.GetXaxis().SetTitleSize(3.* ratio.GetXaxis().GetTitleSize())
-    ratio_stats.GetYaxis().SetTitleSize(3.* ratio.GetYaxis().GetTitleSize())
-    
-    norm_stack = ROOT.THStack('norm_stack', '')
-    
-    for kk, vv in temp_hists.items():
-        if 'data' in kk: continue
-        hh = vv.Clone()
-        hh.Divide(stats)
+        # avoid the display histogram to be attached to the out root file
+        ROOT.TH1.AddDirectory(False)
 
+        cms.SetEnergy(13)
+        cms.SetLumi(data.samples.luminosity_year.get(year, {'total':-1} )['total'])
+        cms.SetExtraText("Preliminary")
+        cms.ResetAdditionalInfo()
+        cms.AppendAdditionalInfo(data.samples.ch_labels[self.channel])
 
-
-    line = ROOT.TLine(ratio.GetXaxis().GetXmin(), 1., ratio.GetXaxis().GetXmax(), 1.)
-    line.SetLineColor(ROOT.kBlack)
-    line.SetLineWidth(1)
- 
-    return ratio_stats, norm_stack,line, ratio
-
-
-def get_data_sample_name(ch): # FIXME take it from the samples.py
-    return 'data_sm' if ch in ['emu', 'mumu', 'mu'] else 'data_eg'
-
-
-def get_samples_for_legend(samples, ch, data_smpl):
-    result = [str(k) for k in samples[ch] if 'data' not in k and 'ext' not in k]
-    if data_smpl is not None:
-        result.append(data_smpl)
-    return result
-
-
-def style_histograms(temp_hists, hname, colours):
-
-    for key, hist in temp_hists[hname].items():
-        print(f' styling {key} > {hist}')
-        sample_name = key.split(hname + '_')[1]
-        is_data = f'{hname}_data' in key
-        color = ROOT.kWhite if is_data else colours.get(sample_name, ROOT.kBlack)
-        
-        set_histogram_style(hist, hname, 'Events', color, color)
-
-
-
-def create_histogram_stacks(temp_hists, hname, blinding):
-    """Creates histogram stacks for the given channel, both data and MC."""
-    
-    # FIXME group together same MC samples
-    mc_ths     = ROOT.THStack('stack', '')
-    data_ths   = ROOT.THStack('data_stack', '')
-    
-    # MC stack
-    for key, ihist in temp_hists[hname].items():
-        if f'{hname}_data' in key: continue
-        ihist.Draw('hist same')
-        if "bstautau" not in key: # keep signal out of the MC stack
-            mc_ths.Add(ihist.GetValue())
-    mc_ths.SetMinimum(0.0001)
-
-    # DATA stack
-    for key, ihist in temp_hists[hname].items():
-        if f'{hname}_data' not in key:
-            continue
-        
-        # CRITICAL: Clone the histogram for display only - don't modify the original for blinding
-        display_hist = ihist.GetValue().Clone(f"{key}_display")
-        
-        # Apply blinding ONLY to the display clone, not the original
-        if should_apply_blinding(hname) and blinding:
-            apply_data_blinding_to_histogram(display_hist, hname)
-        
-        display_hist.Draw('hist same')
-        display_hist.SetLineWidth(0)
-        data_ths.Add(display_hist)  # Use the cloned version for display
-
-    return mc_ths, data_ths
-
-
-def draw_stat(ths1):
-
-    stats = ths1.GetStack().Last().Clone()
-    stats.SetLineColor(0)
-    stats.SetFillColor(ROOT.kGray + 1)
-    stats.SetFillStyle(3344)
-    stats.SetMarkerSize(0)
-    stats.Draw('E2 SAME')
-
-    return stats
-
-
-def style_and_draw_bstautau(temp_hists, k, ths1, colours, scale_to_mc=True):
-    hist = temp_hists[k][f'{k}_bstautau']
-    hist.SetFillColor(0)
-    hist.SetMarkerSize(0)
-    hist.SetLineColor(colours['bstautau'])
-    hist.SetMarkerColor(colours['bstautau'])
-    #print("BsTauTau histogram integral:", hist.Integral(),k)
-    
-    if scale_to_mc:
-        # Scale to MC stack (ths1) instead of data
-        if ths1.GetStack() and ths1.GetStack().Last() and hist.Integral() > 0:
-            mc_integral = ths1.GetStack().Last().Integral()
-            scale_factor = mc_integral / hist.Integral()
-            hist.Scale(scale_factor)
-            #print(f"Scaled BsTauTau histogram to MC for total of {hist.Integral()}")
-
-    hist.Draw("hist same")
-    hist.Draw("EP same")
-
-
-def save_plot_versions(c1, basedir, ch, k, main_pad, scale_suffix=""):
-    """
-    Save plots in multiple formats and versions with new directory structure.
-    """
-    if scale_suffix == "_scaled":
-        base_path = f'{basedir}/{ch}/samples_based/bstautau_scaled'
-    elif scale_suffix == "_unscaled":
-        base_path = f'{basedir}/{ch}/samples_based/bstautau_not_scaled'
-    else:
-        # For plots without BsTauTau, use scaled path as default
-        base_path = f'{basedir}/{ch}/samples_based/bstautau_scaled'
-    
-    # Linear version
-    main_pad.SetLogy(False)
-    c1.Modified()
-    c1.Update()
-    
-    # Save linear versions in all formats
-    c1.SaveAs(f'{base_path}/lin/pdf/{k}.pdf')
-    c1.SaveAs(f'{base_path}/lin/png/{k}.png')
-    c1.SaveAs(f'{base_path}/lin/C/{k}.C')
-    c1.SaveAs(f'{base_path}/lin/root/{k}.root')
-    
-    # Log version - simplified maximum finding
-    main_pad.SetLogy(True)
-    
-    # Get maximum more efficiently
-    current_max = 1  # Default fallback
-    pad_primitives = main_pad.GetListOfPrimitives()
-    for obj in pad_primitives:
-        if hasattr(obj, 'GetMaximum'):
-            obj_max = obj.GetMaximum()
-            if obj_max > current_max:
-                current_max = obj_max
-        elif hasattr(obj, 'GetStack') and obj.GetStack():
-            stack_max = obj.GetStack().Last().GetMaximum()
-            if stack_max > current_max:
-                current_max = stack_max
-    
-    # Set maximum for log scale
-    log_max = current_max * 1000
-    log_min = 1e-0 # Avoid log(0)
-    for obj in pad_primitives:
-        if hasattr(obj, 'SetMaximum'):
-            obj.SetMaximum(log_max)
-        if hasattr(obj, 'SetMinimum'):
-            obj.SetMinimum(log_min)
-
-    c1.Modified()
-    c1.Update()
-    
-    # Save log versions in all formats
-    c1.SaveAs(f'{base_path}/log/pdf/{k}.pdf')
-    c1.SaveAs(f'{base_path}/log/png/{k}.png')
-    c1.SaveAs(f'{base_path}/log/C/{k}.C')
-    c1.SaveAs(f'{base_path}/log/root/{k}.root')
-    
-    # Reset to linear and restore original maximum
-    main_pad.SetLogy(False)
-    for obj in pad_primitives:
-        if hasattr(obj, 'SetMaximum'):
-            obj.SetMaximum(current_max)
-        if hasattr(obj, 'SetMinimum'):
-            obj.SetMinimum(1e-4)
-    c1.Modified()
-    c1.Update()
-
-
-def process_histograms(histos, temp_hists, samples, ch, colours, basedir, titles, main_pad, ratio_pad, c1, blinding, mconly=False):
-    
-    # ROOT file for saving histograms with compression
-    root_file_path = f'{basedir}/histograms.root'
-    root_file = ROOT.TFile(root_file_path, 'UPDATE', "", ROOT.kLZMA)  # Use LZMA compression
-    root_file.SetCompressionLevel(1)  # Fast compression
-    print(f" + created ROOT file: {root_file_path}")
-    
-    # Create channel folder in ROOT file
-    channel_folder = root_file.mkdir(ch)
-    
-    # merge histograms (WIP)
-    merged_temp_hists = merge_histograms(temp_hists)
-
-    # loop on histograms templates
-    for i, (hname, hinfo) in enumerate(histos.items()):
-        print(f" ({i+1}/{len(histos)}) - {hname} ...")
-        branch_name, selection, isjet_based, h_model, xlabel, logscale = hinfo
-        
-        c1.cd()
-
-        # create legend with unique sample names (data, MC, signal)
-        data_smpl           = get_data_sample_name(ch) if not mconly else None
-        samples_for_legend  = get_samples_for_legend(samples, ch, data_smpl)
-        leg                 = create_legend(temp_hists, samples_for_legend, titles)
-
-        # plotting main pad
-        main_pad.cd()
-        main_pad.SetLogy(logscale)
-
-        # style all histograms
-        style_histograms(temp_hists, hname, colours)
-        
-        # stack
-        mc_ths, data_ths = create_histogram_stacks(temp_hists, hname, blinding)
-        mc_ths.Draw('hist')
-        
-        # get X-axis range from the histogram
-        x_min = mc_ths.GetXaxis().GetXmin()
-        x_max = mc_ths.GetXaxis().GetXmax()
-        
-        # max Y
-        if mc_ths.GetStack() and mc_ths.GetStack().Last():
-            mc_max = mc_ths.GetStack().Last().GetMaximum()
+        print(f" [PlottingKit] initialized with channel {self.channel} and smaples: {list(self.samples.keys())}")
+        if not self._flavor_based:
+            print(" [PlottingKit] sample-based")
         else:
-            mc_max = 1
-            
-        if data_ths.GetStack() and data_ths.GetStack().Last():
-            data_max = data_ths.GetStack().Last().GetMaximum()
-        else:
-            data_max = 1
-
-        # BsTauTau plots, calculate max considering both scaled and unscaled versions
-        if f'{hname}_bstautau' in temp_hists[hname]:
-            bstautau_hist = temp_hists[hname][f'{hname}_bstautau'].GetValue()
-            bstautau_unscaled_max = bstautau_hist.GetMaximum()
-            
-            # Calculate what the scaled max would be using MC INTEGRAL (back to original)
-            if mc_ths.GetStack() and mc_ths.GetStack().Last():
-                mc_integral = mc_ths.GetStack().Last().Integral()
-                scale_factor = mc_integral / bstautau_hist.Integral() if bstautau_hist.Integral() > 0 else 1
-                bstautau_scaled_max = bstautau_unscaled_max * scale_factor
-            else:
-                bstautau_scaled_max = bstautau_unscaled_max
-            
-            # Use the maximum of all scenarios
-            desired_max = 1.5 * max(mc_max, data_max, bstautau_unscaled_max, bstautau_scaled_max)
-        else:
-            desired_max = 1.5 * max(mc_max, data_max)
+            print(" [PlottingKit] flavor-based")
         
-        # Clear and redraw with fixed Y-axis range
-        main_pad.Clear()
-        
-        # Draw frame with desired Y-axis range
-        frame = main_pad.DrawFrame(x_min, 0.0001, x_max, desired_max)
-        frame.GetXaxis().SetTitle(xlabel)
-        frame.GetYaxis().SetTitle('events')
-        
-        # Draw histogram on top of the fixed frame
-        mc_ths.Draw('hist same')
+    # SETTERS
 
-        stats = draw_stat(mc_ths)
-        leg.AddEntry(stats, 'stat. unc.', 'F')
-        leg.Draw('same')
+    def set_channel(self, ttbar_ch):
+        self.channel = ttbar_ch
+    def set_weight_branch(self, weight_branch):
+        self.weight_branch = weight_branch
+    def set_temp_hists(self, temp_hists):
+        self.temp_hists = temp_hists
+    def set_samples(self, datamc_samples):
+        self.samples = datamc_samples
+    def set_colors(self, colours):
+        self.colours = colours
+    def set_blinding(self, blinding):
+        self.blinding = blinding
+    def set_mc_only(self, mc_only):
+        self._mc_only = mc_only
+    def set_flavor_based(self, flavor_based):
+        self._flavor_based = flavor_based
+    def set_debug(self, debug):
+        self._debug = debug
+    def set_signal_scale(self, scale):
+        if isinstance(scale, (int, float)):
+            self.signal_scale = scale
 
-        # add data if present
-        has_data = bool(data_ths.GetStack() and data_ths.GetStack().Last())
-        if has_data:
-            data_ths.GetStack().Last().SetLineColor(ROOT.kBlack)
-            data_ths.GetStack().Last().Draw('EP same')
 
-        # CRITICAL: Save histograms to ROOT file BEFORE any scaling to preserve original integrals
-        save_histograms_to_root_file(channel_folder, hname, mc_ths, data_ths, temp_hists)
+    # ----------- I/O HELPER FUNCTIONS -----------
+    def setup_output_directory(self):
+        """Create directories for storing plots in multiple formats and versions."""
+        self.out_plot_base_path  = os.path.join(self.output_dir, self.channel, 'samples_based' if not self._flavor_based else 'flavor_based')
+        # Sample-based plots
+        for y in self._out_yscale:
+            for fmt in self._out_formats:
+                os.makedirs( os.path.join(self.out_plot_base_path, 'bstautau_scaled', y, fmt), exist_ok=True)
 
-        # IMPORTANT: Plot unscaled version FIRST, then scaled version
-        # because scaling modifies the histogram permanently
-        
-        # Version 1: BsTauTau at original scale (not scaled to MC) - PLOT FIRST
-        if f'{hname}_bstautau' in temp_hists[hname].keys():
-            style_and_draw_bstautau(temp_hists, hname, mc_ths, colours, scale_to_mc=False)
-        
-        #FIXME : year dependencies!
-        CMS_lumi(main_pad, 4, 0, cmsText='CMS', extraText=' Preliminary', lumi_13TeV='59.7 fb^{-1}')
-        main_pad.cd()
-
-        if has_data:
-            ratio = data_ths.GetStack().Last().Clone()
-            ratio.Divide(stats)
-            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[hname], ratio, stats, ratio_pad)
-        else: # fill with dummy histogram to avoid crash
-            ratio = ROOT.TH1F('ratio', '', 1, x_min, x_max)
-            ratio.Fill(0.5, 1.)
-            ratio_stats, norm_stack, line, ratio = compute_ratio_plot(temp_hists[hname], ratio, stats, ratio_pad)
-        
-        ratio_pad.cd()
-        norm_stack.Draw('hist same')
-        ratio_stats.Draw('E2')
-        norm_stack.Draw('hist same')
-        ratio_stats.Draw('E2 same')
-        line.Draw('same')
-        ratio.Draw('EP same')
-
-        # Save unscaled version in all formats (linear and log)
-        save_plot_versions(c1, basedir, ch, hname, main_pad, scale_suffix="_unscaled")
-
-        # Version 2: BsTauTau scaled to data (current behavior) - PLOT SECOND
-        if f'{hname}_bstautau' in temp_hists[hname].keys():
-            # Clear and redraw everything with scaling
-            c1.cd()
-            main_pad.cd()
-            main_pad.Clear()
-            
-            # Apply the same frame strategy for the scaled version
-            frame = main_pad.DrawFrame(x_min, 0.0001, x_max, desired_max)
-            frame.GetXaxis().SetTitle(xlabel)
-            frame.GetYaxis().SetTitle('Events')
-            
-            # Redraw the main plot components on the fixed frame
-            mc_ths.Draw('hist same')
-            stats.Draw('E2 SAME')
-            if has_data:
-                data_ths.GetStack().Last().Draw('EP same')
-            leg.Draw('same')
-
-            # Draw BsTauTau WITH scaling (this will modify the histogram permanently)
-            style_and_draw_bstautau(temp_hists, hname, mc_ths, colours, scale_to_mc=True)
+        self.root_file_path = os.path.join(self.output_dir, 'histograms.root')
+        print(f" [PlottingKit|OUTPUT] + plots directories {self.output_dir} --- {self.channel}")
     
-            CMS_lumi(main_pad, 4, 0, cmsText='CMS', extraText=' Preliminary', lumi_13TeV='L = 59.7 fb^{-1}')
+    def unpack_histogram_info(self, hinfo):
+        pass
 
-            # Redraw ratio plot (same as before)
-            if has_data:
-                ratio_pad.cd()
-                ratio_pad.Clear()
-                norm_stack.Draw('hist same')
-                ratio_stats.Draw('E2')
-                norm_stack.Draw('hist same')
-                ratio_stats.Draw('E2 same')
-                line.Draw('same')
-                ratio.Draw('EP same')
-            
-            # Save scaled version in all formats (linear and log)
-            save_plot_versions(c1, basedir, ch, hname, main_pad, scale_suffix="_scaled")
-
-        else:
-            # For plots without BsTauTau, just save the regular version
-            save_plot_versions(c1, basedir, ch, hname, main_pad, scale_suffix="")
-
-        # ROOT file already saved above before any scaling
-
-    # Close the ROOT file
-
-def save_histograms_to_root_file(channel_folder, histogram_name, ths1, data_ths, temp_hists):
-    """
-    Save histograms to ROOT file with proper folder structure matching plot organization.
-    CRITICAL: Always saves ORIGINAL UNBLINDED data for fitting purposes.
-    """
-    # Create main histogram folder
-    histo_folder = channel_folder.mkdir(histogram_name)
+    def save_plot_version(self, canv, outname):
+        base_path = os.path.join(self.out_plot_base_path, 'bstautau_scaled', 'lin')
+        for fmt in self._out_formats :
+            canv.SaveAs(os.path.join(base_path,fmt, f'{outname}.{fmt}'))
     
-    # Create subfolders for different versions
-    bstautau_scaled_folder = histo_folder.mkdir("bstautau_scaled")
-    lin_scaled_folder = bstautau_scaled_folder.mkdir("lin")
-    log_scaled_folder = bstautau_scaled_folder.mkdir("log")
-    
-    # Only create unscaled folders if bstautau is present
-    if f'{histogram_name}_bstautau' in temp_hists[histogram_name]:
-        bstautau_unscaled_folder = histo_folder.mkdir("bstautau_not_scaled")
-        lin_unscaled_folder = bstautau_unscaled_folder.mkdir("lin")
-        log_unscaled_folder = bstautau_unscaled_folder.mkdir("log")
-    else:
-        # Create empty unscaled folders for consistency
-        bstautau_unscaled_folder = histo_folder.mkdir("bstautau_not_scaled")
-        lin_unscaled_folder = bstautau_unscaled_folder.mkdir("lin")
-        log_unscaled_folder = bstautau_unscaled_folder.mkdir("log")
-   
-    # Function to save histograms in a specific folder
-    def save_histos_in_folder(folder, bstautau_scaled=True):
-        folder.cd()
-        
-        # Save MC stack (total background)
-        if ths1.GetStack() and ths1.GetStack().Last():
-            mc_total = ths1.GetStack().Last().Clone(f"{histogram_name}_mc_total")
+
+    def _get_channel_folder(self):
+        """ lazily open self.root_file_path once per channel run, cached on the instance
+        so every histogram doesn't re-open/re-mkdir the same file (that was silently
+        creating duplicate ';2', ';3', ... cycles and risking losing unflushed writes) """
+        if self._root_file is None:
+            self._root_file = ROOT.TFile(self.root_file_path, 'UPDATE', "", ROOT.kLZMA)  # LZMA compression
+            self._root_file.SetCompressionLevel(1)  # fast compression
+            self._channel_folder = self._root_file.mkdir(self.channel)
+        return self._channel_folder
+
+    def close_root_file(self):
+        if self._root_file is not None:
+            self._root_file.Close()
+            self._root_file = None
+            self._channel_folder = None
+
+    def save_toROOT(self, hname, mc_stack, data_stack):
+
+        channel_folder = self._get_channel_folder()
+        hfolder = channel_folder.mkdir(hname)
+        hfolder.cd()
+
+        # save MC
+        if mc_stack.GetStack() and mc_stack.GetStack().Last():
+            mc_total = mc_stack.GetStack().Last().Clone()
             mc_total.Write("mc_total")
+        for key, hist in self.temp_hists[hname].items():
+            sname = key.split(hname+'_')[1]
+            if 'data' in sname : continue
+            this_hist = hist.GetValue().Clone()
+            this_hist.Write(sname)
+
+        # save DATA directly from the original (unblinded) version
+        if not self._mc_only:
+            data_string = '_'.join([hname, 'data'])
+            data_keys = [k for k in self.temp_hists[hname] if data_string in k]
+            if data_keys:
+                original_data_hist = self.temp_hists[hname][data_keys[0]].GetValue().Clone(f"{hname}_data_original")
+                for k in data_keys[1:]:
+                    original_data_hist.Add(self.temp_hists[hname][k].GetValue())
+                original_data_hist.Write("data_obs")
+       
+
+    # ----------- PLOTTING STYLE FUNCTIONS -----------
+    def apply_style(self, hname, xtitle, ytitle):
+        """ apply style to histos in temp_hists[hname] """
+        for key, hist in self.temp_hists[hname].items():
+            
+            if (self._debug) : print(f' [PlottingKit] styling {key} > {hist}')
+            sample_name = key.split(hname + '_')[1]
+            is_data     = f'{hname}_data' in key
+            color = ROOT.kBlack if is_data else self.colours.get(sample_name, ROOT.kBlack)
+
+            hist.GetXaxis().SetTitle(xtitle)
+            hist.GetYaxis().SetTitle(ytitle)
+            hist.SetFillColor(color)
+            hist.SetLineColor(color)
+            hist.SetMarkerStyle(20 if is_data else 0)
+            hist.SetMarkerSize(1.0 if is_data else 0)
+    
+    def create_legend(self, hname, xylow_xyhigh=(0.30,.65,.95,.90)):
+        """Create a legend for the histograms."""
+        leg = ROOT.TLegend(*xylow_xyhigh)
+        leg.SetBorderSize(0)
+        leg.SetFillStyle(0)
+        leg.SetTextFont(42)
+        leg.SetTextSize(0.04)
+        leg.SetNColumns(3)
         
-        # CRITICAL: Save the ACTUAL plotted data from data_ths (before blinding was applied)
-        if data_ths.GetStack() and data_ths.GetStack().Last():
-            # Get the original data from temp_hists first (unblinded)
-            original_data_hist = None
+        data_added = False
+        for entry in self.samples.keys():
+            if 'data' in entry and data_added: continue
+            is_signal = 'bstautau' in entry
+            leg.AddEntry(
+                self.temp_hists[hname][hname+'_'+entry].GetValue(), 
+                self.titles.get(entry, entry) + (f' #times{self.signal_scale}' if is_signal and self.signal_scale > 1. else ''), 
+                "EP" if 'data' in entry else ('L' if is_signal else 'F')
+            )
+            data_added = 'data' in entry or data_added
+
+        if not data_added and not self._mc_only:
+            print(f" [PlottingKit] WARNING: no data sample found in {list(self.samples.keys())}. Adding a dummy entry for data in the legend.")
             
-            original_data_hist = data_ths.GetStack().Last().Clone(f"{histogram_name}_data_original")
-            
-            if original_data_hist:
-                original_data_hist.Write("data_obs")  # Use ROOT-friendly name for fitting
+        return leg
+
+    def _blind_histogram(self, h, lo, hi):
+        """ zero out bins whose center falls within [lo, hi] - blinds a display
+        histogram in place; save_toROOT never sees this clone, only the pristine one """
+        for i in range(1, h.GetNbinsX() + 1):
+            if lo <= h.GetBinCenter(i) <= hi:
+                h.SetBinContent(i, 0)
+                h.SetBinError(i, 0)
+
+    def create_stack(self, hname):
+        """Create a stack of histograms for MC samples and a separate histogram for data."""
+        mc_stack    = ROOT.THStack(f"{hname}_mc_stack", "")
+        data_stck   = ROOT.THStack(f"{hname}_data_stack", "")
+        h_sig        = None
+        h_sig_scaled = None
+
+        data_string = '_'.join([hname, 'data'])
+        scaletolumi = self.mc_lumi_scale[self.channel]
+
+        for key, hist in self.temp_hists[hname].items():
+            if data_string in key:
+                display_h = hist.GetValue().Clone(f"{key}_display") # crucial to avoid modifying the original when blinding
+                if hname in self.blinding:
+                    self._blind_histogram(display_h, *self.blinding[hname])
+                data_stck.Add(display_h)
+            elif 'bstautau' in key:
+                h_sig        = hist.GetValue().Clone()
+                h_sig.Scale(scaletolumi) 
+                h_sig_scaled = hist.GetValue().Clone(f"{key}_scaled") 
+                h_sig_scaled.Scale(self.signal_scale*scaletolumi)
             else:
-                print(f"WARNING: No original data histogram found for {histogram_name}")
-        
-        # Save bstautau signal if present
-        if f'{histogram_name}_bstautau' in temp_hists[histogram_name]:
-            # CRITICAL: Always clone the original histogram first to avoid permanent modification
-            original_bstautau = temp_hists[histogram_name][f'{histogram_name}_bstautau'].GetValue()
-            bstautau_hist = original_bstautau.Clone(f"{histogram_name}_bstautau_{'scaled' if bstautau_scaled else 'unscaled'}")
-            
-            # Apply scaling to MC instead of data if this is the scaled version
-            if bstautau_scaled and ths1.GetStack() and ths1.GetStack().Last():
-                mc_integral = ths1.GetStack().Last().Integral()
-                if bstautau_hist.Integral() > 0:
-                    scale_factor = mc_integral / bstautau_hist.Integral()
-                    bstautau_hist.Scale(scale_factor)
-            
-            bstautau_hist.Write("bstautau")
-        
-        # Save individual MC samples
-        for key, ihist in temp_hists[histogram_name].items():
-            sample_name = key.split(f'{histogram_name}_')[1]
-            
-            # Skip data and bstautau (already saved separately)
-            if 'data' in sample_name or 'bstautau' in sample_name:
-                continue
+                h_display = hist.GetValue().Clone()
+                h_display.Scale(scaletolumi)
+                mc_stack.Add(h_display)
+
+        return mc_stack, data_stck, h_sig, h_sig_scaled
+    
+    # ----------- PROCESSING HISTOGRAMS AND PLOTTING ----------------
+    # 1. INITIALIZE HISTOGRAMS
+    
+    def initialize_histograms(self):
+        """
+            Initialize the histograms for a set of samples
+            Works with:
+                histos (dict): dictionary <name>: (<branch_name>, <selection_string>, <isJet_based(bool)>, <h_model(ROOT.RDF.TH1DModel)>, <xlabel>, <logscale>)
+                samples (dict): dictionary <sample_name>: <RDataFrame>
+                norm_weight (str): branch name for the normalization weight to be applied to the histograms. Default is 'tot_weight'
+
+            Returns:
+                dict: A dictionary containing the initialized histograms for each variable and sample. "xvar" : { "sample_name" : TH1D, ... }
+        """
+
+        # loop on histograms templates
+        for hname, hinfo in self.config_hists.items():
+            self.temp_hists[hname] = {}
+            branch_name, selection, isjet_based, h_model, xlabel, logscale = hinfo
+            # loop on samples
+            for sname, srdf in self.samples.items():
+                #print(f' [PlottingKit] {hname} -- {sname}')
+                thisselection = selection
+                if ('bstautau' in sname) and (isjet_based):
+                    thisselection += "&&(j_sel_btagL_pt20_for_histo_signalBs_mask==1)"
+                if (isjet_based): thisselection +=  '&&(j_sel_btagL_pt20_for_histo_ParTRegMass>5)'
                 
-            # Clone and save individual MC samples
-            individual_hist = ihist.GetValue().Clone(f"{histogram_name}_{sample_name}")
-            individual_hist.Write(sample_name)
+                if thisselection == '(1)':
+                    self.temp_hists[hname][f'{hname}_{sname}'] = srdf.Histo1D(h_model, branch_name, self.weight_branch)
+                else:
+                    if isjet_based:
+                        #print(f'  > jet-based selection: {selection}')
+                        self.temp_hists[hname][f'{hname}_{sname}'] = srdf.Define(f'{branch_name}_toplot', f'{branch_name}[{thisselection}]').Histo1D(h_model, f'{branch_name}_toplot', self.weight_branch)
+                    else: #event-based
+                        self.temp_hists[hname][f'{hname}_{sname}'] = srdf.Filter(thisselection).Histo1D(h_model, branch_name, self.weight_branch)
+            if self._debug: print(self.temp_hists)
+
+    def initialize_flavor_histograms(self, debug=False):
+       pass
+
+    # 2. PROCESS HISTOGRAMS
+
+    def compute_ratio(self, denom, num):
+        """ num/denom ratio histogram, accepting either a THStack (uses its total) or a plain TH1 """
+        h_denom = denom.GetStack().Last().Clone() if isinstance(denom, ROOT.THStack) else denom.Clone()
+        h_num   = num.GetStack().Last().Clone() if isinstance(num, ROOT.THStack) else num.Clone()
+
+        h_num.Divide(h_denom)
+        return h_num
+
+    def get_mc_total(self, stack):
+        """ MC total histogram (with combined stat errors), built from a THStack """
+        return stack.GetStack().Last().Clone() if isinstance(stack, ROOT.THStack) else stack.Clone()
+
+    def _style_stat_band(self, h):
+        """ solid, semi-transparent stat-uncertainty band - a sparse hatch (3344) reads
+        too faint at typical pad sizes, this is much easier to spot at a glance """
+        h.SetFillColorAlpha(ROOT.kBlack, 0.50)
+        h.SetFillStyle(3004)
+        h.SetMarkerSize(0)
+        h.SetLineWidth(0)
+        return h
+
+    def get_stat_unc(self, stack):
+        """ 
+        MC stat-uncertainty band around 1, built from a THStack's total.
+        """
+        h_total = self.get_mc_total(stack)
+        band = h_total.Clone()
+        for i in range(1, band.GetNbinsX() + 1):
+            content = h_total.GetBinContent(i)
+            rel_err = h_total.GetBinError(i) / content if content != 0 else 0.
+            band.SetBinContent(i, 1.)
+            band.SetBinError(i, rel_err)
+        return self._style_stat_band(band)
+
+    def process_histograms(self):
+
+        # scratch canvas used only to force THStack to build its internal axis/maximum
+        # reused across histograms so it never leaks or collides with the saved canvases
+        scratch = ROOT.TCanvas(f"c_{self.channel}_scratch", "", 10, 10)
+
+        try:
+            # loop on histograms templates
+            for i, (hname, hinfo) in enumerate(self.config_hists.items()):
+                print(f" [PlottingKit] ({i+1}/{len(self.config_hists)}) - {hname} ...")
+
+                branch_name, selection, isjet_based, h_model, xlabel, logscale = hinfo
+
+                # apply style to histograms
+                self.apply_style(hname, xlabel, "Jets" if isjet_based else "Events")
+
+                # create legend with unique sample names (data, MC, signal)
+                leg                 = self.create_legend(hname)
+
+                # stack
+                mc_stack, data_stck, signal_h, scaled_signal_h  = self.create_stack(hname)
+
+                scratch.cd()
+                scratch.Clear()
+                mc_stack.Draw("hist") # important to get axis info
+                
+                has_data_hist = bool(data_stck.GetHists() and data_stck.GetHists().GetSize() > 0)
+                if has_data_hist:
+                    data_stck.Draw("hist same") # same - data_stck needs this too, or GetStack() below comes back empty
+                has_data = has_data_hist and bool(data_stck.GetStack() and data_stck.GetStack().Last())
+
+                self.save_toROOT(hname, mc_stack, data_stck)
+
+                max_y = 1
+                if mc_stack.GetStack() and mc_stack.GetStack().Last():
+                    max_y = max(max_y, mc_stack.GetStack().Last().GetMaximum())
+                if has_data:
+                    max_y = max(max_y, data_stck.GetStack().Last().GetMaximum())
+                if signal_h is not None:
+                    max_y = max(max_y, signal_h.GetMaximum())
+                max_y *= self.y_headroom_log if logscale else self.y_headroom_lin
+
+                x_min = mc_stack.GetXaxis().GetXmin()
+                x_max = mc_stack.GetXaxis().GetXmax()
+
+                # create canvas
+                c = cms.cmsDiCanvas(f"c_{self.channel}_{hname}",
+                                    x_min = x_min, x_max = x_max,
+                                    y_min = 0., y_max = max_y,
+                                    r_min = 0.6, r_max = 1.4,
+                                    nameXaxis = xlabel, nameYaxis = "Jets" if isjet_based else "Events", nameRatio = "Data/MC",
+                                    square = False, iPos=11, extraSpace=0, scaleLumi=1
+                )
+
+                # --- main pad ---
+                c.cd(1)
+                #mc_stack.Draw("HIST same")
+                cms.cmsObjectDraw(mc_stack, "HIST SAME")
+                if mc_stack.GetStack() and mc_stack.GetStack().Last():
+                    mc_stat_band = self._style_stat_band(mc_stack.GetStack().Last().Clone(f"{hname}_mc_statband"))
+                    mc_stat_band.Draw("E2 same")
+                if has_data:
+                    data_stck.GetStack().Last().Draw("EP same")
+                if signal_h is not None:
+                    cms.cmsDraw(scaled_signal_h, "HIST same",
+                                msize=0,
+                                lwidth=2, lcolor= scaled_signal_h.GetLineColor(), lstyle=ROOT.kSolid,
+                                fstyle=0, fcolor=0
+                                )
+                leg.Draw("same")
+
+                # --- ratio pad ---
+                c.cd(2)
+                line = ROOT.TLine(x_min, 1., x_max, 1.)
+                line.SetLineColor(ROOT.kBlack)
+                line.SetLineStyle(ROOT.kDashed)
+                
+                # (S+B)/B
+                if signal_h is not None:
+                    sb_pred = signal_h.Clone(f"{hname}_sb_pred")
+                    sb_pred.Add(self.get_mc_total(mc_stack))
+                    sb_ratio = self.compute_ratio(mc_stack, sb_pred)
+                    cms.cmsDraw(sb_ratio, "HIST", lcolor=sb_ratio.GetLineColor(), lwidth=2, lstyle=ROOT.kDashed, fstyle=0)
+                line.Draw("same")
+
+                # DATA/MC
+                if has_data:
+                    stat_band = self.get_stat_unc(mc_stack)
+                    stat_band.Draw("E2 same")
+
+                    ratio_h = self.compute_ratio(mc_stack, data_stck)
+                    ratio_h.SetMarkerStyle(20)
+                    ratio_h.Draw("EP same")
+
+                self.save_plot_version(c, hname)
+                c.Close()
+
+        finally:
+            scratch.Close()
+            self.close_root_file()
+
+             
+
+            
+
+
     
-    # Save scaled versions (both linear and log - same histograms, different organization)
-    save_histos_in_folder(lin_scaled_folder, bstautau_scaled=True)
-    save_histos_in_folder(log_scaled_folder, bstautau_scaled=True)
+# -------------------------------
     
-    # Save unscaled versions only if bstautau is present
-    if f'{histogram_name}_bstautau' in temp_hists[histogram_name]:
-        save_histos_in_folder(lin_unscaled_folder, bstautau_scaled=False)
-        save_histos_in_folder(log_unscaled_folder, bstautau_scaled=False)
-    
-    # Save unscaled versions only if bstautau is present
-    if f'{histogram_name}_bstautau' in temp_hists[histogram_name]:
-        save_histos_in_folder(lin_unscaled_folder, bstautau_scaled=False)
-        save_histos_in_folder(log_unscaled_folder, bstautau_scaled=False)
+    def run(self, debug=False):
+        self.setup_output_directory()
+        self.initialize_histograms()
+        self.process_histograms()
+        
+        self.temp_hists.clear()
+
+
+
+# ------ plotting_kit class

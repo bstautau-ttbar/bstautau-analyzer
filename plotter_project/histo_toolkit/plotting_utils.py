@@ -1,6 +1,6 @@
 import ROOT
 import math
-from .cmsstyle import CMS_lumi #FIXME hardcoded year
+from .bstautau_cmsstyle import legacy_CMS_lumi as CMS_lumi #FIXME hardcoded year
 from .officialStyle import officialStyle
 from blinding_utils import apply_data_blinding_to_histogram, should_apply_blinding
 

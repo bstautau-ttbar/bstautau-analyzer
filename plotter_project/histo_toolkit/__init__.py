@@ -1,5 +1,4 @@
-from . import cmsstyle
-from . import officialStyle
+from . import bstautau_cmsstyle
 
 from . import histos_baseline
 from . import histos_config
