@@ -187,7 +187,7 @@ if __name__ == "__main__":
             hlt_accept     = data.selection.trigger_selections.get(year, {}).get(ch, {})
             hlt_exclude    = data.selection.trigger_exclusions.get(year, {}).get(ch, {})
             if _is_data_:
-                hlt_sel        = '&'.join([f'!({exl})' for exl in hlt_exclude[name]]) if hlt_exclude.get(name, []) else "(1)"
+                hlt_sel        = '&'.join([f'!{exl}' for exl in hlt_exclude[name]]) if hlt_exclude.get(name, []) else "(1)"
                 hlt_sel        = '&'.join([hlt_sel, hlt_accept[name]])
             else:
                 hlt_sel        = ' | '.join([hlt_accept.get(dset, "(1)") for dset in hlt_accept])
@@ -207,6 +207,10 @@ if __name__ == "__main__":
             pre_sel = data.selection.preselection.get(ch, "(1)")
             print(f" [SKIM] preselection: {pre_sel}")
             samples[ch][name] = samples[ch][name].Filter(pre_sel)
+
+            _no_events_ = (samples[ch][name].Count().GetValue() == 0)
+            if _no_events_:
+                utils.logger.print_warning(f"[{name}] NO EVENTS survive preselection in channel {ch}")
 
             # ---- JET COLLECTIONS ----
             # define jets passing minimal kinematics and b-tagging conditions
@@ -244,24 +248,21 @@ if __name__ == "__main__":
                 utils.logger.print_error(f"[TMP] Failed to save processed sample to {tmp_outpath}")
                 sys.exit(1)
 
-            # --- DATA tmp snapshot is final output (no SFs to be applied) ---
-            if _is_data_:
-                utils.logger.print_info(f"[{name}] data sample: skipping SF computation")
+            # --- DATA, or MC with 0 events: tmp snapshot is final output (no SFs to be applied) ---
+            if _is_data_ or _no_events_:
+                utils.logger.print_info(f"[{name}] skipping SF computation" + (" (data sample)" if _is_data_ else " (0 events)"))
                 shutil.move(tmp_outpath, outpath)  # works across filesystems (e.g. /tmp -> eos/afs)
                 utils.logger.print_success(f"[OUTPUT] Saved final processed sample to {outpath}")
                 continue
-            
+
             # --- MC ---
             # reference: full entry_idx set + count from the RDF snapshot ---
             with uproot.open(tmp_outpath) as f:
-                tree = f[_tree_name]
+                tree          = f[_tree_name]
                 n_events_in   = tree.num_entries
                 entry_idx_in  = tree["entry_idx"].array(library="np")
                 print(f" + {n_events_in} events read from {tmp_outpath}")
-            if n_events_in == 0:
-                print(f"[{name}] 0 events survive selection — skipping SF step, writing empty tree")
-                continue
-            
+
             # sanity: tmp output itself shouldn't have duplicates (defensive, cheap)
             assert len(np.unique(entry_idx_in)) == n_events_in, f"[{name}] duplicate entry_idx already present in {tmp_outpath} before SF processing"
 

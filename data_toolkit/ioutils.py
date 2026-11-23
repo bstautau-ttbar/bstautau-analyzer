@@ -1,4 +1,3 @@
-import argparse
 import os, sys
 import ROOT
 import numpy as np
@@ -16,6 +15,15 @@ def checkpath(path, isdir=False, mustexist=True):
         if isdir and not os.path.isdir(path):
             os.makedirs(path)
             print(f"[INFO] created directory {path}")
+
+def checktree(filename, treename):
+    check = True
+    checkfile = ROOT.TFile.Open(filename)
+    if not checkfile.Get(treename) : check = False
+    #check = isinstance(treename, (ROOT.TTree, ROOT.TChain))
+    checkfile.Close()
+    return check
+    
 
 def get_genEventSumw(file_path):
     """
@@ -46,8 +54,11 @@ def load_mc_samples(indir, mc_samples_names, year, files_names, tree_name, neven
         file_name = os.path.join(tree_dir_mc, files_names[k]+'.root')
         checkpath(file_name, isdir=False, mustexist=True)
         
+        if not checktree(file_name, tree_name):
+            print(f" - {os.path.basename(file_name)}")
+            continue
+        
         print(f" + {os.path.basename(file_name)}")
-
         # Create RDataFrame for the sample
         if not nevents:
             outsamples[k] = ROOT.RDataFrame(tree_name, file_name)
@@ -98,7 +109,7 @@ def load_MCuproot(indir, sample_name, year, files_names, tree_name, nevents = No
 
     return df
 
-def load_data_samples(indir, channel, samples_names, year, files_names, tree_name, nevents = None):#(ch, data_samples, files_names, tree_name, tree_dir_data, trigger_selections, trigger_exclusions, eras_2018, nevents = None, use_filtered_data=False, tree_dir_filtered=None):
+def load_data_samples(indir, channel, samples_names, year, files_names, tree_name, nevents = None, spliteras=True):#(ch, data_samples, files_names, tree_name, tree_dir_data, trigger_selections, trigger_exclusions, eras_2018, nevents = None, use_filtered_data=False, tree_dir_filtered=None):
     
     """Load data samples and apply trigger selections and exclusions."""
     data_samples_dict = dict()
@@ -114,13 +125,14 @@ def load_data_samples(indir, channel, samples_names, year, files_names, tree_nam
         file_name = files_names[sample]
         tmp_chain = ROOT.TChain(tree_name)
 
-        for era in samples.eras.get(year, []):
-            era_file = f'{data_dir}/{file_name}{era}.root'
+        eras = samples.eras.get(year, []) if spliteras else ['']
+        for era in eras:
+            era_file = f'{data_dir}/{file_name}{era}.root' 
             if not os.path.isfile(era_file):
-                print(f"Warning: File {era_file} does not exist. Skipping this era for sample {sample}.")
+                print(f"WARNING: {era_file} does not exist--> skipping")
                 continue
-            print(f" + {os.path.basename(era_file)}")
             tmp_chain.Add(era_file)
+            print(f" + {os.path.basename(era_file)}")
 
         if nevents == None:
             tmp_data_rdf = ROOT.RDataFrame(tmp_chain)
