@@ -138,7 +138,7 @@ if __name__ == "__main__":
             for name, histo in histos[f'{cutvar}_{th:.2f}'].items():
                 is_bstautau = 'bstautau' in name
             
-                htools.plotting_utils.set_histogram_style(
+                htools.plotting_kit.set_histogram_style(
                     histo,
                     x_title = params['test_var_label'],
                     y_title = "Jets",

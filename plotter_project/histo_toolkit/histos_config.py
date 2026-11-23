@@ -17,32 +17,37 @@ Several dictionaries for histogram definitions.
 import ROOT
 
 # ------------------ GENERIC HISTOGRAMS ------------------
-histo_leptons = {
-    'e1_pt'     : ('e1_pt', '(1)', False, ROOT.RDF.TH1DModel('e1_pt', '', 40, 0, 200), 'e_{1} p_{T} (GeV)', False),
-    'e1_eta'    : ('e1_eta','(1)', False, ROOT.RDF.TH1DModel('e1_eta','', 50, -2.5, 2.5), 'e_{1} #eta', False),
-    'e1_phi'    : ('e1_phi','(1)', False, ROOT.RDF.TH1DModel('e1_phi', '', 20, -3.14, 3.14), 'e_{1} #phi', False),
-    'e1_dxy'    : ('e1_dxy','(1)', False, ROOT.RDF.TH1DModel('e1_dxy', '', 40, -0.02, 0.02), 'e_{1} d_{xy}', False),
-    'e1_charge' : ('e1_charge', '(1)', False, ROOT.RDF.TH1DModel('e1_charge', '',3, -1.5, 1.5), 'Electron 1 charge', False),
-    'MT_e1_MET' : ('MT_e1_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_e1_MET', '',60, 30, 180), 'e_{1} m_{T}', False), 
-    'e2_pt'     : ('e2_pt', '(1)', False, ROOT.RDF.TH1DModel('e2_pt', '', 40, 0, 200), 'e_{2} p_{T} (GeV)', False),
-    'e2_eta'    : ('e2_eta','(1)', False, ROOT.RDF.TH1DModel('e2_eta','', 50, -2.5, 2.5), 'e_{2} #eta', False),
-    'e2_phi'    : ('e2_phi','(1)', False, ROOT.RDF.TH1DModel('e2_phi', '', 20, -3.14, 3.14), 'e_{2} #phi', False),
-    'e2_dxy'    : ('e2_dxy','(1)', False, ROOT.RDF.TH1DModel('e2_dxy', '', 40, -0.02, 0.02), 'e_{2} d_{xy}', False),
-    'e2_charge' : ('e2_charge', '(1)', False, ROOT.RDF.TH1DModel('e2_charge', '',3, -1.5, 1.5), 'Electron 1 charge', False),
-    'MT_e2_MET' : ('MT_e2_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_e2_MET', '',60, 30, 180), 'e_{2} m_{T}', False), 
-
-    'mu1_pt'     : ('mu1_pt', '(1)', False, ROOT.RDF.TH1DModel('mu1_pt', '', 40, 0, 200), '#mu_{1} p_{T} (GeV)', False),
-    'mu1_eta'    : ('mu1_eta','(1)', False, ROOT.RDF.TH1DModel('mu1_eta','', 50, -2.5, 2.5), '#mu_{1} #eta', False),
-    'mu1_phi'    : ('mu1_phi','(1)', False, ROOT.RDF.TH1DModel('mu1_phi', '', 20, -3.14, 3.14), '#mu_{1} #phi', False),
-    'mu1_dxy'    : ('mu1_dxy','(1)', False, ROOT.RDF.TH1DModel('mu1_dxy', '', 40, -0.02, 0.02), '#mu_{1} d_{xy}', False),
-    'mu1_charge' : ('mu1_charge', '(1)', False, ROOT.RDF.TH1DModel('mu1_charge', '',3, -1.5, 1.5), 'Electron 1 charge', False),
-    'MT_mu1_MET' : ('MT_mu1_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_mu1_MET', '',60, 0, 180), '#mu_{1} m_{T}', False),
-    'mu2_pt'     : ('mu2_pt', '(1)', False, ROOT.RDF.TH1DModel('mu2_pt', '', 40, 0, 200), '#mu_{2} p_{T} (GeV)', False),
-    'mu2_eta'    : ('mu2_eta','(1)', False, ROOT.RDF.TH1DModel('mu2_eta','', 50, -2.5, 2.5), '#mu_{2} #eta', False),
-    'mu2_phi'    : ('mu2_phi','(1)', False, ROOT.RDF.TH1DModel('mu2_phi', '', 20, -3.14, 3.14), '#mu_{2} #phi', False),
-    'mu2_dxy'    : ('mu2_dxy','(1)', False, ROOT.RDF.TH1DModel('mu2_dxy', '', 40, -0.02, 0.02), '#mu_{2} d_{xy}', False),
-    'mu2_charge' : ('mu2_charge', '(1)', False, ROOT.RDF.TH1DModel('mu2_charge', '',3, -1.5, 1.5), '#mu_{2} charge', False),
-    'MT_mu2_MET' : ('MT_mu2_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_mu2_MET', '',60, 30, 180), '#mu_{2} m_{T}', False),
+histo_leading_el = {
+    'e1_pt'     : ('e1_pt',     '(1)', False, ROOT.RDF.TH1DModel('e1_pt', '',       36, 20, 200),       'e_{1} p_{T} (GeV)', False),
+    'e1_eta'    : ('e1_eta',    '(1)', False, ROOT.RDF.TH1DModel('e1_eta','',       50, -2.5, 2.5),     'e_{1} #eta',        False),
+    'e1_phi'    : ('e1_phi',    '(1)', False, ROOT.RDF.TH1DModel('e1_phi', '',      20, -3.14, 3.14),   'e_{1} #phi',        False),
+    'e1_dxy'    : ('e1_dxy',    '(1)', False, ROOT.RDF.TH1DModel('e1_dxy', '',      40, -0.02, 0.02),   'e_{1} d_{xy}',      False),
+    'e1_charge' : ('e1_charge', '(1)', False, ROOT.RDF.TH1DModel('e1_charge', '',   3, -1.5, 1.5),      'e_{1} charge',      False),
+    'MT_e1_MET' : ('MT_e1_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_e1_MET', '',   60, 30, 180),       'e_{1} m_{T} (GeV)', False), 
+}
+histo_sublead_el = {
+    'e2_pt'     : ('e2_pt',     '(1)', False, ROOT.RDF.TH1DModel('e2_pt', '',       40, 0, 200),        'e_{2} p_{T} (GeV)',    False),
+    'e2_eta'    : ('e2_eta',    '(1)', False, ROOT.RDF.TH1DModel('e2_eta','',       50, -2.5, 2.5),     'e_{2} #eta',           False),
+    'e2_phi'    : ('e2_phi',    '(1)', False, ROOT.RDF.TH1DModel('e2_phi', '',      20, -3.14, 3.14),   'e_{2} #phi',           False),
+    'e2_dxy'    : ('e2_dxy',    '(1)', False, ROOT.RDF.TH1DModel('e2_dxy', '',      40, -0.02, 0.02),   'e_{2} d_{xy}',         False),
+    'e2_charge' : ('e2_charge', '(1)', False, ROOT.RDF.TH1DModel('e2_charge', '',   3, -1.5, 1.5),      'e_{2} charge',         False),
+    'MT_e2_MET' : ('MT_e2_MET', '(1)', False, ROOT.RDF.TH1DModel('MT_e2_MET', '',   60, 30, 180),       'e_{2} m_{T} (GeV)',    False), 
+}
+histo_leading_mu = {
+    'mu1_pt'     : ('mu1_pt',       '(1)', False, ROOT.RDF.TH1DModel('mu1_pt', '',      40, 0, 200),        '#mu_{1} p_{T} (GeV)',  False),
+    'mu1_eta'    : ('mu1_eta',      '(1)', False, ROOT.RDF.TH1DModel('mu1_eta','',      50, -2.5, 2.5),     '#mu_{1} #eta',         False),
+    'mu1_phi'    : ('mu1_phi',      '(1)', False, ROOT.RDF.TH1DModel('mu1_phi', '',     20, -3.14, 3.14),   '#mu_{1} #phi',         False),
+    'mu1_dxy'    : ('mu1_dxy',      '(1)', False, ROOT.RDF.TH1DModel('mu1_dxy', '',     40, -0.02, 0.02),   '#mu_{1} d_{xy}',       False),
+    'mu1_charge' : ('mu1_charge',   '(1)', False, ROOT.RDF.TH1DModel('mu1_charge', '',  3, -1.5, 1.5),      '#mu_{1} charge',       False),
+    'MT_mu1_MET' : ('MT_mu1_MET',   '(1)', False, ROOT.RDF.TH1DModel('MT_mu1_MET', '',  60, 0, 180),        '#mu_{1} m_{T} (GeV)',  False),
+}
+histo_sublead_mu = {
+    'mu2_pt'     : ('mu2_pt',       '(1)', False, ROOT.RDF.TH1DModel('mu2_pt', '',      40, 0, 200),        '#mu_{2} p_{T} (GeV)',  False),
+    'mu2_eta'    : ('mu2_eta',      '(1)', False, ROOT.RDF.TH1DModel('mu2_eta','',      50, -2.5, 2.5),     '#mu_{2} #eta',         False),
+    'mu2_phi'    : ('mu2_phi',      '(1)', False, ROOT.RDF.TH1DModel('mu2_phi', '',     20, -3.14, 3.14),   '#mu_{2} #phi',         False),
+    'mu2_dxy'    : ('mu2_dxy',      '(1)', False, ROOT.RDF.TH1DModel('mu2_dxy', '',     40, -0.02, 0.02),   '#mu_{2} d_{xy}',       False),
+    'mu2_charge' : ('mu2_charge',   '(1)', False, ROOT.RDF.TH1DModel('mu2_charge', '',  3, -1.5, 1.5),      '#mu_{2} charge',       False),
+    'MT_mu2_MET' : ('MT_mu2_MET',   '(1)', False, ROOT.RDF.TH1DModel('MT_mu2_MET', '',  60, 30, 180),       '#mu_{2} m_{T} (GeV)',  False),
 }
 
 histo_jets = {
@@ -108,7 +113,7 @@ histo_fit = {
 
 
 # ---------------- HISTOGRAMS PER TTBAR CHANNEL ---------------- 
-# ---- standard ----
+# ---- STANDARD ----
 histo_baseline = {
     'emu' : {},
     'ee'  : {},
@@ -118,65 +123,35 @@ histo_baseline = {
 }
 
 for ch in ['emu', 'ee', 'e']:
-    histo_baseline[ch]['e1_pt'] = histo_leptons['e1_pt']
-    histo_baseline[ch]['e1_eta'] = histo_leptons['e1_eta']
-    histo_baseline[ch]['e1_phi'] = histo_leptons['e1_phi']
-    histo_baseline[ch]['e1_dxy'] = histo_leptons['e1_dxy']
-    histo_baseline[ch]['e1_charge'] = histo_leptons['e1_charge']
-    histo_baseline[ch]['MT_e1_MET'] = histo_leptons['MT_e1_MET']
+    histo_baseline[ch].update(histo_leading_el)
 for ch in ['emu', 'mumu', 'mu']:
-    histo_baseline[ch]['mu1_pt'] = histo_leptons['mu1_pt'] 
-    histo_baseline[ch]['mu1_eta'] = histo_leptons['mu1_eta']
-    histo_baseline[ch]['mu1_phi'] = histo_leptons['mu1_phi']
-    histo_baseline[ch]['mu1_dxy'] = histo_leptons['mu1_dxy']
-    histo_baseline[ch]['mu1_charge'] = histo_leptons['mu1_charge']
-    histo_baseline[ch]['MT_mu1_MET'] = histo_leptons['MT_mu1_MET']
-
-histo_baseline['ee']['e2_pt']    = histo_leptons['e2_pt']
-histo_baseline['ee']['e2_eta'] = histo_leptons['e2_eta']
-histo_baseline['ee']['e2_phi'] = histo_leptons['e2_phi']
-histo_baseline['ee']['e2_dxy'] = histo_leptons['e2_dxy']
-histo_baseline['ee']['e2_charge'] = histo_leptons['e2_charge']
-histo_baseline['ee']['MT_e2_MET'] = histo_leptons['MT_e2_MET']
-
-histo_baseline['mumu']['mu2_pt'] = histo_leptons['mu2_pt'] 
-histo_baseline['mumu']['mu2_eta'] = histo_leptons['mu2_eta']
-histo_baseline['mumu']['mu2_phi'] = histo_leptons['mu2_phi']
-histo_baseline['mumu']['mu2_dxy'] = histo_leptons['mu2_dxy']
-histo_baseline['mumu']['mu2_charge'] = histo_leptons['mu2_charge']
-histo_baseline['mumu']['MT_mu2_MET'] = histo_leptons['MT_mu2_MET']
+    histo_baseline[ch].update(histo_leading_mu)
+histo_baseline['ee'].update(histo_sublead_el)
+histo_baseline['mumu'].update(histo_sublead_mu)
 
 for ch in ['emu', 'ee', 'mumu', 'e', 'mu']:
     histo_baseline[ch].update(histo_jets)
     histo_baseline[ch].update(histo_fit)
 
-#  ---- test ----
+#  ---- TEST ----
 histo_testmode = dict()
-# --- ttbar emu
 histo_testmode['emu'] = { 
-    'e1_pt'     : histo_leptons['e1_pt'],
-    'mu1_pt'    : histo_leptons['mu1_pt'],
+    'e1_pt'     : histo_leading_el['e1_pt'],
+    'mu1_pt'    : histo_leading_mu['mu1_pt'],
 }
-histo_testmode['emu'].update(histo_fit)
-# --- ttbar mumu
 histo_testmode['mumu'] = {
-    'mu1_pt'    : histo_leptons['mu1_pt'],
-    'mu2_pt'    : histo_leptons['mu2_pt'],
+    'mu1_pt'    : histo_leading_mu['mu1_pt'],
+    'mu2_pt'    : histo_sublead_mu['mu2_pt'],
 }
-histo_testmode['mumu'].update(histo_fit)
-# --- ttbar ee
 histo_testmode['ee'] = {
-    'e1_pt'     : histo_leptons['e1_pt'],
-    'e2_pt'     : histo_leptons['e2_pt'],
+    'e1_pt'     : histo_leading_el['e1_pt'],
+    'e2_pt'     : histo_sublead_el['e2_pt'],
 }
-histo_testmode['ee'].update(histo_fit)
-# --- ttbar mu
 histo_testmode['mu'] = {
-    'mu1_pt'    : histo_leptons['mu1_pt'],
+    'mu1_pt'    : histo_leading_mu['mu1_pt'],
 }
-histo_testmode['mu'].update(histo_fit)
-# --- ttbar e
 histo_testmode['e'] = {
-    'e1_pt'     : histo_leptons['e1_pt'],
+    'e1_pt'     : histo_leading_el['e1_pt'],
 }
-histo_testmode['e'].update(histo_fit)
+for ch in ['emu', 'ee', 'mumu', 'e', 'mu']: 
+    histo_testmode[ch].update(histo_fit)

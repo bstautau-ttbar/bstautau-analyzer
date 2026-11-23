@@ -1,7 +1,6 @@
 import ROOT
 from data_toolkit.samples import data_samples_names
-from .plotting_utils import set_histogram_style, CMS_lumi, compute_ratio_plot, officialStyle, draw_stat
-from blinding_utils import apply_data_blinding_to_histogram, should_apply_blinding
+from .plotting_kit import set_histogram_style
 
 def initialize_flavor_histograms(histos, samples, ch):
     """Initialize histograms categorized by jet flavor - MAXIMUM EFFICIENCY VERSION."""
@@ -263,8 +262,8 @@ def create_flavor_histogram_stacks(temp_hists, k, desired_max, blinding):
             else:
                 original_hist = ihist
             display_hist = original_hist.Clone(f"{key}_display_flavor")
-            if should_apply_blinding(k) and blinding:
-                apply_data_blinding_to_histogram(display_hist, k)
+            #if should_apply_blinding(k) and blinding:
+                #apply_data_blinding_to_histogram(display_hist, k)
             display_hist.SetLineWidth(2)
             display_hist.SetMarkerStyle(20)
             data_ths.Add(display_hist)

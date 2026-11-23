@@ -7,6 +7,12 @@ from . import bstautau_cmsstyle as cms
 
 _cms_style_ready = False
 
+def set_histogram_style(hist, x_title, y_title, fill_color, line_color):
+    hist.GetXaxis().SetTitle(x_title)
+    hist.GetYaxis().SetTitle(y_title)
+    hist.SetFillColor(fill_color)
+    hist.SetLineColor(line_color)
+
 """
     plotting_kit class
 """
@@ -23,8 +29,7 @@ class plotting_kit:
     year            = 2018 
     channel         = None
     signal_scale    = 50.
-    #mc_lumi_scale   = {'emu' : 0.89, 'ee' : 0.47, 'mumu': 1., 'e' : 0.47, 'mu' : 1. }  # DIRTY: apply scale to MC to match the lumi in processed data
-    mc_lumi_scale   = {'emu' : 0.95, 'ee' : 1.0, 'mumu': 1., 'e' : 1.0, 'mu' : 1.0 }  # DIRTY: apply scale to MC to match the lumi in processed data
+    mc_lumi_scale   = {'emu' : 1.0, 'ee' : 1.0, 'mumu': 1., 'e' : 1.0, 'mu' : 1.0 }  # DIRTY: apply scale to MC to match the lumi in processed data
 
     y_headroom_lin  = 1.5   # multiply the peak bin by this for a linear-scale frame
     y_headroom_log  = 100.  # log scale needs decades of headroom, not a percentage
