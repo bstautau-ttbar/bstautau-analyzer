@@ -68,7 +68,7 @@ additionalInfoFont = 42
 additionalInfo = []  # For extra info
 
 # ratio of 'CMS' and extra text size
-extraOverCmsTextSize = 0.76
+extraOverCmsTextSize = 0.8
 
 drawLogo = False
 

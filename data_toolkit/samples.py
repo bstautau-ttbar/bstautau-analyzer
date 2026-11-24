@@ -205,6 +205,10 @@ titles['st_antit'] = 'ST_t_antitop'
 titles['st_tw'] = 'ST_tW_top'
 titles['st_antitw'] = 'ST_tW_antitop'
 titles['bstautau'] = 'B_{s}#rightarrow#tau#tau'
+# jet hadronFlavour categories (flavor-based plotting mode)
+titles['b_jets']     = 'b-jets'
+titles['c_jets']     = 'c-jets'
+titles['light_jets'] = 'light-jets'
 # channels
 titles['emu']   = 'e#mu'
 titles['mumu']  = '#mu#mu'
@@ -232,3 +236,7 @@ colours['st_antitw']    = colours['st_tw']
 colours['w']            = ROOT.TColor.GetColor("#717581")
 colours['dy']           = ROOT.TColor.GetColor("#e76300")
 colours['bstautau']     = ROOT.TColor.GetColor("#ffa90e")
+# jet hadronFlavour categories (flavor-based plotting mode)
+colours['b_jets']       = ROOT.kRed+1
+colours['c_jets']       = ROOT.kAzure+2
+colours['light_jets']   = ROOT.kGreen+2

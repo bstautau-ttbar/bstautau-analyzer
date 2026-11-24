@@ -29,7 +29,7 @@ import tagger.utils as tagger
 # [x] common data toolkit
 # [ ] merge together similar samlpes and work on colors
 # [ ] organize into libraries (WIP)
-# [ ] implement the splitting by flavor rather than by samples 
+# [x] implement the splitting by flavor rather than by samples 
 
 BATCH_SIZE  = int(1e4)
 NTHREADS    = multiprocessing.cpu_count()
@@ -263,25 +263,6 @@ if __name__ == '__main__':
                                                                                 f'{jet_branch}_for_histo_part_class_mask')
             
                 
-            if False: # FIXME: commented for the moment need to be reimplemented properly
-                histos_flavor[ch] = {}  # Clear regular flavor histos
-                histos_flavor[ch].update(histos_part_selections)  # Only add sequential cuts histos for flavor
-            # else:
-                # Regular plotting - define all the usual histograms
-                ## Define combined scores histograms
-                histos[ch].update(histos_combined_scores)
-                histos[ch].update(histos_jets_part)
-                histos[ch].update(histos_interesting_jets_part)
-
-                if flavor:
-                    histos_flavor[ch].update(histos_interesting_jets_part)
-                    histos_flavor[ch].update(histos_combined_scores)
-
-                ## define MAX scores
-                samples[ch][name] = define_max_scores(samples[ch][name], parT_scores, 'bstautau' in name, bstautau_conditions)
-                histos[ch].update(histos_max_scores)
-                #histos_flavor[ch].update(histos_max_scores) Not really easy to do because they are filtered in a weird way and I would need to define also hadronFlavor with the same filter
-            
             # Save a snapshot of few events for debugging
             if _testmode_ and (nevents is not None):
                 os.makedirs(f"tmp_out/{ch}", exist_ok=True)
@@ -305,7 +286,7 @@ if __name__ == '__main__':
             flavor_based=flavor,
             debug=False
         )
-        #plotter.set_blinding(blinddata)
+        #plotter.set_blinding(blinddata) #FIXME : needs better implementation
         plotter.set_mc_only(mc_only)
 
         plotter.run()
